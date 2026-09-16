@@ -130,26 +130,33 @@ generate_incident_report(event_data: dict) -> dict
 - Port 8080 is VS Code. Use 3000+ for dev servers.
 - Check Bedrock model IDs before hardcoding — models vary by lab account.
 
-## Git Sync Rule (ALWAYS FOLLOW THIS)
+## Git Sync Rule (ALWAYS FOLLOW THIS — MANDATORY FOR EVERY CLAUDE SESSION)
 
-**Before every task:** run `git pull` to get the latest from all team members.
+**Ask the user which person they are (Naitik, Sriram, or Sujoy) at the start of every new session.**
 
-**After every task:** update your PLAN.md AND `collab/SYNC.md`, then push. Every time.
+**Before every task:** run `git pull` and read `collab/SYNC.md` to see what changed.
+
+**After every task — ALL of these, every time, no exceptions:**
 
 ```
-1. git pull
+1. git pull (get latest from teammates)
 2. Do the work
 3. Update collab/<your-name>/PLAN.md with what you did (append, don't overwrite)
 4. Update collab/SYNC.md with a short entry so the whole team sees it
-   Folders: collab/naitik/, collab/sriram/, collab/sujoy/
-5. git add -A
-6. git commit with a clear message
-7. git push (if push fails due to conflict, git pull --rebase then push again)
+5. Update THIS FILE (CLAUDE.md) if you:
+   - Changed a tool signature or added a new tool
+   - Changed the project structure (new files/folders)
+   - Moved a tool from "TO BUILD" to "DONE" in the tool interfaces section above
+   - Changed how the agent works, the UI design, or the deploy setup
+   - Found a new gotcha that other team members need to know
+6. git add -A
+7. git commit with a clear message
+8. git push (if push fails due to conflict: git pull --rebase then push again)
 ```
 
-**Ask the user which person they are (Naitik, Sriram, or Sujoy) at the start of every new session** so you update the right PLAN.md.
+**CLAUDE.md is the single source of truth.** If you built a tool, mark it DONE here. If you changed a signature, update it here. If you found a bug, add it to gotchas. The other Claudes read this file at the start of every session — if it's not in CLAUDE.md, they don't know about it.
 
-**Always read `collab/SYNC.md` after pulling** to see what the other team members have done since your last session.
+Folders: collab/naitik/, collab/sriram/, collab/sujoy/
 
 ## Commands
 ```bash
