@@ -35,3 +35,28 @@ Also: Strands agent + system prompt, wiring all tools together
 - Naitik: improve tool implementations if needed (query_scada, check_operational_context, locate_leak are working but basic)
 - Sujoy: build Streamlit UI that calls the agent, AgentCore deployment
 - Me: refine system prompt based on testing more events, add generate_incident_report tool for Sujoy
+
+## 2026-09-16 — Added confidence scoring, what-if scenarios, batch scorecard
+
+### What I built
+- **`src/tools/compute_confidence.py`** — data-driven confidence scoring (not LLM-guessed)
+  - 4 weighted signals: FP checks clear (35%), deficit persistence (25%), leak rate severity (25%), segment integrity risk (15%)
+  - Returns score like "72% HIGH" with full breakdown showing which signals contributed
+
+- **`src/tools/simulate_scenario.py`** — what-if scenario projections
+  - Supports: continue, double, escalate, isolate scenarios
+  - Calculates: cumulative gas loss, time to PHMSA threshold, cost estimates (gas + shutdown + penalty exposure)
+  - Shows comparison: "isolate now vs. wait X hours" with dollar cost of delay
+
+- **`src/batch_scorecard.py`** — runs all 20 events through tool-based classification
+  - 5 real leaks + 15 false positives vs. ground truth
+  - Result: **20/20 (100% accuracy)**, avg confidence 81%
+  - Run with `python -m src.batch_scorecard`
+
+- **Updated agent** — system prompt now includes confidence scoring and what-if phases, 8 tools wired
+
+### Tested
+- Batch scorecard: 20/20 correct (5/5 leaks detected, 15/15 FPs rejected)
+- LK-002 full agent: confidence 72% HIGH, what-if shows $103K cost if delayed 48hrs, PHMSA damage threshold exceeded
+- LK-005 full agent: near-rupture correctly triggers ESD + immediate NRC notification
+- FP-001 full agent: correctly classified as false positive, no action needed
