@@ -3,6 +3,28 @@
 Tools: `generate_incident_report`
 Also: Streamlit UI, AgentCore Runtime deployment, demo prep
 
+## 2026-09-16 21:30 — Created comprehensive post-hackathon submission document
+
+### Built:
+- `presentation.md` — Full narrative submission document covering all aspects of the solution
+  - 12 sections + 3 appendices covering problem statement, architecture, agent reasoning, tool design, classification logic, evaluation results, ground truth walkthroughs, AgentCore deployment, operator interface, known limitations, data grounding, and team contributions
+  - Verification checklist with every claim traced to specific source code lines and data files
+  - Honest representation of AgentCore confidence scoring limitation, mock adapter coverage, severity mismatch for escalating events
+  - No fabricated claims — every assertion is verifiable against the codebase
+
+### Verified against source code:
+- 20/20 batch scorecard confirmed via `python -m src.batch_scorecard`
+- 89/89 tests confirmed via `python -m pytest src/tests/ -v`
+- Ground truth leakage removal confirmed (Sriram's latest code review changes pulled)
+- All tool signatures, file paths, and line numbers checked against current codebase
+
+## 2026-09-16 20:45 — Completed comprehensive UI audit
+
+### Built:
+- `collab/sujoy/review.md` — 333-line audit across 9 dimensions with 19 findings (3 P0, 4 P1, 8 P2, 4 P3)
+- `collab/sujoy/screenshots/` — Automated Playwright captures at 1440x900 and 1280x720
+- Key finding: severity mismatch for escalating events (LK-005 near_rupture classified as moderate due to narrow SCADA window)
+
 ## 2026-09-16 20:05 — Integrated Sriram's confidence scoring & what-if scenarios into UI
 
 ### Built:

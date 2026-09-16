@@ -4,6 +4,31 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-09-16 — Sujoy: Created comprehensive post-hackathon submission document
+
+### What changed
+- Created `presentation.md` — full narrative submission document (not slides format)
+- 12 sections + 3 appendices covering architecture, agent reasoning, tool design, evaluation, deployment, and known limitations
+- Includes verification checklist: every claim traced to source code lines and data files
+- Pulled Sriram's latest changes (ground truth leakage removal) and verified 20/20 accuracy still holds
+
+### For Sriram
+Your code review changes (removing ground truth leakage from query_scada, live_agent, compute_confidence, etc.) are documented in the presentation as a key design strength.
+
+### For Naitik
+AgentCore deployment status and ARN are documented with honest notes about the confidence parsing limitation.
+
+---
+
+## 2026-09-16 — Sujoy: Completed comprehensive UI audit
+
+### What changed
+- `collab/sujoy/review.md` — 333-line audit across 9 evaluation dimensions with 19 prioritized findings
+- `collab/sujoy/screenshots/` — Automated Playwright screenshots at two demo resolutions
+- Key P0 findings: severity mismatch for escalating events, alarm queue uses ground truth labels
+
+---
+
 ## 2026-09-16 — Naitik: Agent deployed to AgentCore Runtime + adapter wired
 
 ### What changed
