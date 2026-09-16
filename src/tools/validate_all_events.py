@@ -44,8 +44,8 @@ def validate_leak(event):
     # override a sustained mass balance deficit — a real leak can happen during a cold
     # morning or near a compressor event.
     mbd_sustained = (
-        scada_from.get("mass_balance_deficit", {}).get("sustained_above_0.1", False)
-        or scada_to.get("mass_balance_deficit", {}).get("sustained_above_0.1", False)
+        scada_from.get("mass_balance_deficit", {}).get("sustained_above_0.15", False)
+        or scada_to.get("mass_balance_deficit", {}).get("sustained_above_0.15", False)
     )
     has_operational_cause = context.get("has_operational_cause", False)
     # Mass balance deficit is the deciding factor. Operational context is informational.
@@ -88,7 +88,7 @@ def validate_false_positive(event):
     scada = query_scada(station_id, start, end)
     context = check_operational_context(station_id, timestamp)
 
-    mbd_sustained = scada.get("mass_balance_deficit", {}).get("sustained_above_0.1", False)
+    mbd_sustained = scada.get("mass_balance_deficit", {}).get("sustained_above_0.15", False)
     has_operational_cause = context.get("has_operational_cause", False)
 
     # For a false positive, we WANT: has_operational_cause=True OR mbd_sustained=False

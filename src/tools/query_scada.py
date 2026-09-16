@@ -58,7 +58,7 @@ def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
         if minutes > 0:
             pressure_drop_rate = pressure_drop / minutes
 
-    mbd_sustained = bool((mbd.abs() > 0.1).sum() >= 3)
+    mbd_sustained = bool((mbd > 0.15).sum() >= 3)
     mbd_max = float(mbd.max())
     mbd_mean = float(mbd.mean())
 
@@ -85,8 +85,8 @@ def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
         "mass_balance_deficit": {
             "max_mmscfd": round(mbd_max, 4),
             "mean_mmscfd": round(mbd_mean, 4),
-            "sustained_above_0.1": mbd_sustained,
-            "readings_above_0.1": int((mbd.abs() > 0.1).sum()),
+            "sustained_above_0.15": mbd_sustained,
+            "readings_above_0.15": int((mbd > 0.15).sum()),
         },
         "compressor_status": first_row["compressor_status"],
         "valve_position_pct_start": round(float(first_row["valve_position_pct"]), 1),

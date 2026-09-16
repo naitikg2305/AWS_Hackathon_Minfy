@@ -33,14 +33,13 @@ def compute_confidence(station_id: str, timestamp: str, segment_id: str, reporte
     temp_drop = (w["ambient_temp_f"].max() - w["ambient_temp_f"].min()) if len(w) >= 2 else 0
 
     # Check if deficit is localized (one segment) vs. system-wide (all segments = temp effect)
-    all_stations_scada = pd.read_csv(os.path.join(DATA_DIR, "scada_timeseries.csv"), parse_dates=["timestamp"])
-    other_stations = [s for s in all_stations_scada["station_id"].unique() if s != station_id]
+    other_stations = [s for s in scada["station_id"].unique() if s != station_id]
     system_wide_deficit = False
     if other_stations:
-        other_window = all_stations_scada[
-            (all_stations_scada["station_id"].isin(other_stations))
-            & (all_stations_scada["timestamp"] >= ts - pd.Timedelta(hours=1))
-            & (all_stations_scada["timestamp"] <= ts + pd.Timedelta(minutes=30))
+        other_window = scada[
+            (scada["station_id"].isin(other_stations))
+            & (scada["timestamp"] >= ts - pd.Timedelta(hours=1))
+            & (scada["timestamp"] <= ts + pd.Timedelta(minutes=30))
         ]
         if not other_window.empty:
             other_mean_deficit = other_window["mass_balance_deficit_mmscfd"].mean()

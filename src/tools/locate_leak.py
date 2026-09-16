@@ -110,7 +110,7 @@ def locate_leak(station_id: str, event_time: str) -> dict:
 
         # Leak is proportionally closer to the station with larger drop
         # ratio = fraction of segment length from from_station
-        ratio = drop_from / total_drop
+        ratio = max(0.0, min(1.0, drop_from / total_drop))
         seg_length = seg["length_miles"]
 
         # Calculate cumulative mile marker

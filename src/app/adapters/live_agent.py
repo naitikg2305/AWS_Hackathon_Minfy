@@ -72,7 +72,7 @@ class LiveToolAdapter(AgentAdapter):
 
         has_operational_cause = context_result.get("has_operational_cause", False)
         mbd = scada_result.get("mass_balance_deficit", {})
-        mbd_sustained = mbd.get("sustained_above_0.1", False)
+        mbd_sustained = mbd.get("sustained_above_0.15", False)
         mbd_max = mbd.get("max_mmscfd", 0)
         pressure_drop = scada_result.get("pressure", {}).get("drop_psi", 0)
 
@@ -225,7 +225,7 @@ class LiveToolAdapter(AgentAdapter):
         m = scada.get("mass_balance_deficit", {})
         obs.append(Observation(
             label="Mass balance deficit",
-            value=f"Max {m.get('max_mmscfd', 0):.4f} MMSCFD, sustained={m.get('sustained_above_0.1', False)}",
+            value=f"Max {m.get('max_mmscfd', 0):.4f} MMSCFD, sustained={m.get('sustained_above_0.15', False)}",
             station_id=station_id,
             timestamp=timestamp,
         ))
