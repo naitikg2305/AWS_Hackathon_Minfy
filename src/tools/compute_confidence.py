@@ -103,6 +103,8 @@ def compute_confidence(station_id: str, timestamp: str, segment_id: str, reporte
     inspections = pd.read_csv(os.path.join(DATA_DIR, "inspection_history.csv"))
     seg_insp = inspections[inspections["segment_id"] == seg]
     max_wall_loss = seg_insp["max_depth_pct_wt"].max() if not seg_insp.empty else 0
+    if pd.isna(max_wall_loss):
+        max_wall_loss = 0
 
     integrity_score = min((cp_fail_rate * 0.5 + (max_wall_loss / 100) * 0.5) * 2, 1.0)
     scores["integrity_risk"] = integrity_score
