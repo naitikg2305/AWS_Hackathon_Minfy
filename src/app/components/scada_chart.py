@@ -105,10 +105,11 @@ def render_scada_chart(result: InvestigationResult):
             height=520,
             showlegend=False,
             margin=dict(l=0, r=10, t=30, b=0),
-            plot_bgcolor="white",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
         )
-        fig.update_xaxes(showgrid=True, gridcolor="#f0f0f0")
-        fig.update_yaxes(showgrid=True, gridcolor="#f0f0f0")
+        fig.update_xaxes(showgrid=True, gridcolor="rgba(128,128,128,0.2)")
+        fig.update_yaxes(showgrid=True, gridcolor="rgba(128,128,128,0.2)")
 
         st.plotly_chart(fig, use_container_width=True)
 

@@ -29,6 +29,9 @@ def locate_leak(station_id: str, event_time: str) -> dict:
     Estimate leak location (mile marker) using pressure gradient between
     the two stations bounding the affected segment.
 
+    Uses the principle: leak is closer to the station with the larger pressure drop.
+    Ratio of pressure drops gives proportional distance along the segment.
+
     Args:
         station_id: Station where anomaly was observed, e.g. "ST-03"
         event_time: ISO 8601 string, e.g. "2026-01-28T00:00:00"
@@ -40,6 +43,7 @@ def locate_leak(station_id: str, event_time: str) -> dict:
     segments = _load_segments()
     event_ts = pd.Timestamp(event_time)
 
+    # Find segments where this station is either the from_station or to_station
     seg_from = segments[segments["from_station"] == station_id]
     seg_to = segments[segments["to_station"] == station_id]
     candidate_segments = pd.concat([seg_from, seg_to])
@@ -47,6 +51,7 @@ def locate_leak(station_id: str, event_time: str) -> dict:
     if candidate_segments.empty:
         return {"error": f"No segment found for station {station_id}"}
 
+    # Get baseline pressure (30 min before event) and event pressure for each candidate
     baseline_start = event_ts - pd.Timedelta(hours=1)
     baseline_end = event_ts - pd.Timedelta(minutes=30)
 
@@ -56,6 +61,7 @@ def locate_leak(station_id: str, event_time: str) -> dict:
         to_st = seg["to_station"]
         seg_id = seg["segment_id"]
 
+        # Baseline pressures
         for st in [from_st, to_st]:
             bl = scada[
                 (scada["station_id"] == st)
@@ -70,6 +76,7 @@ def locate_leak(station_id: str, event_time: str) -> dict:
             if bl.empty or ev.empty:
                 continue
 
+        # Get baseline and event pressures for both stations
         bl_from = scada[
             (scada["station_id"] == from_st)
             & (scada["timestamp"] >= baseline_start)
@@ -101,15 +108,20 @@ def locate_leak(station_id: str, event_time: str) -> dict:
         if total_drop <= 0:
             continue
 
-        ratio = drop_from / total_drop
+        # Leak is proportionally closer to the station with larger drop
+        # ratio = fraction of segment length from from_station
+        ratio = max(0.0, min(1.0, drop_from / total_drop))
         seg_length = seg["length_miles"]
 
+        # Calculate cumulative mile marker
         cumulative_start = segments[segments["segment_id"] < seg_id]["length_miles"].sum()
         estimated_mile = cumulative_start + (ratio * seg_length)
 
+        # Parse valve locations
         valve_markers = [float(v.strip()) for v in str(seg["valve_locations_mile_markers"]).split(",")]
         nearest_valves = sorted(valve_markers, key=lambda v: abs(v - estimated_mile))
 
+        # Find isolation valves (one upstream, one downstream of estimated location)
         upstream_valves = [v for v in valve_markers if v <= estimated_mile]
         downstream_valves = [v for v in valve_markers if v >= estimated_mile]
 
@@ -133,5 +145,27 @@ def locate_leak(station_id: str, event_time: str) -> dict:
     if not results:
         return {"error": f"Could not estimate leak location for {station_id} at {event_time}"}
 
+    # Return the segment with the largest total pressure drop (most likely location)
     best = max(results, key=lambda r: r["pressure_drop_from_station_psi"] + r["pressure_drop_to_station_psi"])
     return best
+
+
+if __name__ == "__main__":
+    import json
+
+    # LK-003: real leak at mile 72.0 on SEG-03 (between ST-03 and ST-04)
+    print("=== LK-003 (true location: mile 72.0, SEG-03):")
+    r = locate_leak("ST-03", "2026-01-28T00:00:00")
+    print(json.dumps(r, indent=2))
+    print()
+
+    # LK-002: real leak at mile 119.3 on SEG-05 (between ST-05 and ST-06)
+    print("=== LK-002 (true location: mile 119.3, SEG-05):")
+    r2 = locate_leak("ST-05", "2026-01-05T00:00:00")
+    print(json.dumps(r2, indent=2))
+    print()
+
+    # LK-005: real leak at mile 13.6 on SEG-01 (between ST-01 and ST-02)
+    print("=== LK-005 (true location: mile 13.6, SEG-01):")
+    r3 = locate_leak("ST-01", "2026-02-24T00:00:00")
+    print(json.dumps(r3, indent=2))

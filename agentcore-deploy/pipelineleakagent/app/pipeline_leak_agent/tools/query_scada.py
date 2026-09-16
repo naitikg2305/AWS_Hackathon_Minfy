@@ -43,9 +43,7 @@ def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
     if window.empty:
         return {"error": f"No data for {station_id} between {start_time} and {end_time}"}
 
-    event_flags = window["event_flag"].value_counts().to_dict()
-    has_leak_flag = "leak" in event_flags
-    has_fp_flag = "false_positive" in event_flags
+    operational_flags = window[window["event_flag"].isin(["compressor_start", "valve_change"])]["event_flag"].value_counts().to_dict()
 
     pressure = window["pressure_psi"]
     flow = window["flow_mmscfd"]
@@ -60,7 +58,7 @@ def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
         if minutes > 0:
             pressure_drop_rate = pressure_drop / minutes
 
-    mbd_sustained = bool((mbd.abs() > 0.1).sum() >= 3)
+    mbd_sustained = bool((mbd > 0.15).sum() >= 3)
     mbd_max = float(mbd.max())
     mbd_mean = float(mbd.mean())
 
@@ -87,13 +85,24 @@ def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
         "mass_balance_deficit": {
             "max_mmscfd": round(mbd_max, 4),
             "mean_mmscfd": round(mbd_mean, 4),
-            "sustained_above_0.1": mbd_sustained,
-            "readings_above_0.1": int((mbd.abs() > 0.1).sum()),
+            "sustained_above_0.15": mbd_sustained,
+            "readings_above_0.15": int((mbd > 0.15).sum()),
         },
         "compressor_status": first_row["compressor_status"],
         "valve_position_pct_start": round(float(first_row["valve_position_pct"]), 1),
         "valve_position_pct_end": round(float(last_row["valve_position_pct"]), 1),
-        "event_flags": event_flags,
-        "has_leak_flag": has_leak_flag,
-        "has_false_positive_flag": has_fp_flag,
+        "operational_events": operational_flags,
     }
+
+
+if __name__ == "__main__":
+    import json
+    # Test with LK-003 (real leak on SEG-03)
+    result = query_scada("ST-03", "2026-01-27T23:30:00", "2026-01-28T00:30:00")
+    print("=== LK-003 (real leak, ST-03):")
+    print(json.dumps(result, indent=2))
+    print()
+    # Test with FP-001 window (false positive, compressor start at ST-01)
+    result2 = query_scada("ST-01", "2025-12-04T13:30:00", "2025-12-04T14:30:00")
+    print("=== FP-001 (false positive, ST-01):")
+    print(json.dumps(result2, indent=2))

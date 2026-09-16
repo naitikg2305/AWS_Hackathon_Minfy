@@ -1,31 +1,50 @@
 import streamlit as st
+import pandas as pd
 import plotly.graph_objects as go
+from pathlib import Path
 
 from src.app.models.investigation import InvestigationResult, Classification
 
-STATIONS = [
-    {"id": "ST-01", "mile": 0, "type": "compressor"},
-    {"id": "ST-02", "mile": 28, "type": "meter"},
-    {"id": "ST-03", "mile": 52, "type": "meter"},
-    {"id": "ST-04", "mile": 78, "type": "compressor"},
-    {"id": "ST-05", "mile": 104, "type": "meter"},
-    {"id": "ST-06", "mile": 130, "type": "custody_transfer"},
-    {"id": "ST-07", "mile": 158, "type": "meter"},
-    {"id": "ST-08", "mile": 200, "type": "custody_transfer"},
-]
+DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
 
-SEGMENTS = [
-    {"id": "SEG-01", "start": 0, "end": 28},
-    {"id": "SEG-02", "start": 28, "end": 52},
-    {"id": "SEG-03", "start": 52, "end": 78},
-    {"id": "SEG-04", "start": 78, "end": 104},
-    {"id": "SEG-05", "start": 104, "end": 130},
-    {"id": "SEG-06", "start": 130, "end": 158},
-    {"id": "SEG-07", "start": 158, "end": 200},
-]
+
+@st.cache_data
+def _load_pipeline_layout():
+    meta = pd.read_csv(DATA_DIR / "pipeline_segment_metadata.csv")
+    stations = []
+    segments = []
+    mile = 0
+    for _, row in meta.iterrows():
+        if not any(s["id"] == row["from_station"] for s in stations):
+            stations.append({"id": row["from_station"], "mile": mile, "type": row.get("station_type", "meter")})
+        seg_end = mile + row["length_miles"]
+        segments.append({"id": row["segment_id"], "start": mile, "end": seg_end})
+        mile = seg_end
+        stations.append({"id": row["to_station"], "mile": mile, "type": row.get("station_type", "meter")})
+    seen = set()
+    unique_stations = []
+    for s in stations:
+        if s["id"] not in seen:
+            seen.add(s["id"])
+            unique_stations.append(s)
+    return unique_stations, segments
+
+
+def _get_station_types(stations):
+    try:
+        scada = pd.read_csv(DATA_DIR / "scada_timeseries.csv", usecols=["station_id", "station_type"], nrows=10000)
+        type_map = scada.drop_duplicates("station_id").set_index("station_id")["station_type"].to_dict()
+        for s in stations:
+            if s["id"] in type_map:
+                s["type"] = type_map[s["id"]]
+    except Exception:
+        pass
+    return stations
 
 
 def render_pipeline_map(result: InvestigationResult | None = None):
+    STATIONS, SEGMENTS = _load_pipeline_layout()
+    _get_station_types(STATIONS)
     fig = go.Figure()
 
     for seg in SEGMENTS:
@@ -61,7 +80,7 @@ def render_pipeline_map(result: InvestigationResult | None = None):
                 size=14,
                 color=type_colors.get(s["type"], "#6c757d"),
                 symbol=type_markers.get(s["type"], "circle"),
-                line=dict(color="white", width=2),
+                line=dict(width=2),
             ),
             text=s["id"],
             textposition="top center",
@@ -100,11 +119,12 @@ def render_pipeline_map(result: InvestigationResult | None = None):
             title="Mile Marker",
             range=[-5, 205],
             showgrid=True,
-            gridcolor="#f0f0f0",
+            gridcolor="rgba(128,128,128,0.2)",
             dtick=25,
         ),
         yaxis=dict(visible=False, range=[-0.5, 0.5]),
-        plot_bgcolor="white",
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
     )
 
     st.plotly_chart(fig, use_container_width=True)
