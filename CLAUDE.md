@@ -1,69 +1,162 @@
 # Pipeline Leak Detection & Integrity Agent (UC3)
 
 ## What This Is
-Hackathon project: an agentic AI that analyzes SCADA pipeline data, distinguishes real leaks from false positives (compressor starts, valve changes, temperature shifts), and grounds every claim in specific data rows.
+Hackathon project — Approach C: Detect-to-Report Incident Agent. An AI that handles the full incident lifecycle: detect anomaly → classify as real leak or false positive → recommend isolation response → generate PHMSA regulatory filing. Built with Strands Agents SDK, deployed on Amazon Bedrock AgentCore, with a Streamlit demo UI.
 
-## Project Structure
+See `docs/approach-decision-and-understanding.md` for the full rationale.
+See `docs/solution-overview.md` for the judge-facing summary.
+
+## Architecture — How the Pieces Fit
+
+One Strands agent with 7 tools. The agent receives a natural language question from the operator (via Streamlit UI), calls the tools in sequence, and returns a grounded verdict with citations.
+
 ```
-/workshop
-├── data/                    # CSV datasets + reference docs (not in git, download locally)
-│   ├── scada_timeseries.csv        # 207K rows, 8 stations, 90 days
-│   ├── labeled_leak_events.csv     # 5 real leaks (ground truth)
-│   ├── labeled_false_positive_events.csv  # 15 false positives
-│   ├── pipeline_segment_metadata.csv
-│   ├── gas_composition.csv
-│   ├── weather_conditions.csv
-│   ├── inspection_history.csv
-│   ├── cathodic_protection.csv
-│   ├── valve_status.csv            # ⚠️ segment_id is "01" not "SEG-01"
-│   ├── row_encroachment.csv
-│   └── reference_docs/
-├── src/
-│   ├── tools/               # Tool functions the agent calls
-│   └── agents/              # Agent definitions (Strands SDK)
-└── ui/                      # Demo interface (Streamlit)
+┌──────────────────────────────────────────────────────────────┐
+│                    Streamlit UI (Sujoy)                       │
+│  Operator types: "Pressure drop at ST-03 around midnight     │
+│  on Jan 27 — is this a leak?"                                │
+└─────────────────────────┬────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│              Strands Agent (Sriram)                           │
+│  System prompt enforces: cite every claim, fail loud,        │
+│  follow PHMSA rules. Model: Bedrock Claude.                  │
+│                                                              │
+│  Calls these tools in order:                                 │
+│  1. query_scada         ─── Naitik (DONE)                    │
+│  2. check_operational_context ─── Naitik (DONE)              │
+│  3. locate_leak         ─── Naitik (DONE)                    │
+│  4. get_segment_risk_profile ─── Sriram                      │
+│  5. lookup_operating_envelope ─── Sriram                     │
+│  6. get_regulatory_guidance ─── Sriram                       │
+│  7. generate_incident_report ─── Sujoy                       │
+└─────────────────────────┬────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────────┐
+│              AgentCore Runtime (Sujoy)                        │
+│  Deployed via `agentcore dev --port 3000`                    │
+│  (port 8080 is VS Code — never use it)                       │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Key Gotchas
-- valve_status.csv uses bare segment_id ("01") while everything else uses "SEG-01". Normalize before joining.
-- Don't paste 207K-row SCADA file into agent context. Compute aggregates in code, return summaries only.
+## Tool Interfaces — EVERY TOOL MUST MATCH THESE SIGNATURES
+
+Naitik's tools are DONE and in `src/tools/`. Sriram and Sujoy: import and use them as-is. Build your tools to match the same pattern (function that takes simple args, returns a dict, <150 words output).
+
+### Naitik's tools (DONE — src/tools/)
+
+```python
+# src/tools/query_scada.py
+query_scada(station_id: str, start_time: str, end_time: str) -> dict
+# Returns: pressure stats, flow, mass_balance_deficit (with sustained flag),
+#          compressor_status, valve_position, event_flags
+# Example: query_scada("ST-03", "2026-01-27T23:30:00", "2026-01-28T00:30:00")
+
+# src/tools/check_operational_context.py
+check_operational_context(station_id: str, event_time: str) -> dict
+# Returns: has_operational_cause (bool), likely_false_positive (bool),
+#          explanations[] with type (compressor_start/valve_change/temperature_line_pack)
+# Example: check_operational_context("ST-03", "2026-01-28T00:00:00")
+
+# src/tools/locate_leak.py
+locate_leak(station_id: str, event_time: str) -> dict
+# Returns: segment_id, estimated_mile_marker, nearest_valves, recommended_isolation
+# Example: locate_leak("ST-03", "2026-01-28T00:00:00")
+```
+
+### Sriram's tools (TO BUILD — src/tools/)
+
+```python
+# src/tools/get_segment_risk_profile.py
+get_segment_risk_profile(segment_id: str) -> dict
+# Should return: ILI inspection findings (wall loss %), CP status (failing?),
+#                encroachment activity, overall risk assessment
+# Data: inspection_history.csv, cathodic_protection.csv, row_encroachment.csv
+
+# src/tools/lookup_operating_envelope.py
+lookup_operating_envelope(station_id: str) -> dict
+# Should return: normal pressure range, normal flow range, isolation procedures,
+#                response decision tree (seep/moderate/significant/near_rupture)
+# Data: pipeline_operating_procedures.md, pipeline_segment_metadata.csv
+
+# src/tools/get_regulatory_guidance.py
+get_regulatory_guidance(leak_rate_mmscfd: float, estimated_volume_mcf: float) -> dict
+# Should return: is PHMSA reporting required, NRC notification deadline,
+#                Form 7100.1 required fields, relevant reg citations
+# Data: dot_phmsa_regulatory_reference.md
+```
+
+### Sujoy's tools (TO BUILD — src/tools/)
+
+```python
+# src/tools/generate_incident_report.py
+generate_incident_report(event_data: dict) -> dict
+# Should return: pre-filled Form 7100.1 fields, NRC notification draft,
+#                timeline of events with citations
+# Data: aggregates output from all other tools
+```
+
+## Sriram — Agent Build Instructions
+
+1. `pip install strands-agents strands-agents-tools boto3`
+2. Check which Bedrock model IDs are enabled: `aws bedrock list-foundation-models --query "modelSummaries[?contains(modelId,'claude')]" --output table`
+3. Build the agent in `src/agents/pipeline_agent.py`
+4. Import Naitik's tools from `src/tools/` and wrap them as Strands tools
+5. System prompt MUST enforce:
+   - Cite specific file + row for every claim
+   - Say "data doesn't support this" when evidence is insufficient
+   - Follow PHMSA 5-minute notification rule for significant+ leaks
+   - Cap tool output summaries in the response
+6. Test against all 20 labeled events (5 leaks in `data/labeled_leak_events.csv`, 15 FPs in `data/labeled_false_positive_events.csv`)
+
+## Sujoy — UI & Deploy Instructions
+
+1. Build Streamlit app in `ui/app.py` — run on port 3000 (NEVER 8080)
+2. Input: text box for operator question + optional station/time selectors
+3. Output: agent response with expandable sections for evidence, citations, and incident report
+4. The agent returns structured dicts from each tool — render them as cards/tables
+5. For AgentCore deployment: `agentcore dev --port 3000` for local, then deploy to Runtime
+6. Demo scenarios to prep:
+   - LK-003: significant leak on SEG-03 (good localization story)
+   - FP-001: compressor start false positive (disambiguation)
+   - LK-005: near-rupture on SEG-01 (emergency response + PHMSA reporting)
+
+## Key Gotchas (ALL TEAM MEMBERS READ THIS)
+- `valve_status.csv` segment_id is bare "01" — Naitik's tools already normalize this. If you read valve_status directly, add `"SEG-" + segment_id.zfill(2)`.
+- Don't paste 207K-row SCADA file into agent context. All tools return aggregated summaries.
 - Cap every tool return to <150 words structured output.
 - Port 8080 is VS Code. Use 3000+ for dev servers.
-
-## Team
-- **Naitik** (Person 1) — Data & Detection Logic: `query_scada`, `check_operational_context`, `locate_leak`
-- **Sriram** (Person 2) — Agent Architecture & Orchestration: `get_segment_risk_profile`, `lookup_operating_envelope`, `get_regulatory_guidance`, Strands agent + system prompt
-- **Sujoy** (Person 3) — Deploy, UI & Demo: `generate_incident_report`, Streamlit UI, AgentCore deployment
+- Check Bedrock model IDs before hardcoding — models vary by lab account.
 
 ## Git Sync Rule (ALWAYS FOLLOW THIS)
 
 **Before every task:** run `git pull` to get the latest from all team members.
 
-**After every task:** update your person's PLAN.md and push. Every time.
+**After every task:** update your PLAN.md AND `collab/SYNC.md`, then push. Every time.
 
 ```
 1. git pull
 2. Do the work
-3. Update collab/<name>/PLAN.md with what you did (append, don't overwrite)
+3. Update collab/<your-name>/PLAN.md with what you did (append, don't overwrite)
+4. Update collab/SYNC.md with a short entry so the whole team sees it
    Folders: collab/naitik/, collab/sriram/, collab/sujoy/
-4. git add -A
-5. git commit with a clear message
-6. git push
-```
-
-The PLAN.md update should be a short log entry with a timestamp, like:
-```
-## 2026-09-16 19:30 — Built anomaly detection tool
-- Created `src/tools/query_scada.py`
-- Tested against 5 labeled leaks, 4/5 detected
-- Next: add weather cross-reference
+5. git add -A
+6. git commit with a clear message
+7. git push (if push fails due to conflict, git pull --rebase then push again)
 ```
 
 **Ask the user which person they are (Naitik, Sriram, or Sujoy) at the start of every new session** so you update the right PLAN.md.
+
+**Always read `collab/SYNC.md` after pulling** to see what the other team members have done since your last session.
 
 ## Commands
 ```bash
 pip install -r requirements.txt
 streamlit run ui/app.py --server.port 3000
 agentcore dev --port 3001
+python3 src/tools/query_scada.py          # test Naitik's tools standalone
+python3 src/tools/check_operational_context.py
+python3 src/tools/locate_leak.py
 ```
