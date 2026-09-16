@@ -4,6 +4,28 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-09-16 — Naitik: Agent deployed to AgentCore Runtime + adapter wired
+
+### What changed
+- Deployed full agent to **AgentCore Runtime** (CodeZip, HTTP protocol, us-east-1)
+- Runtime ARN: `arn:aws:bedrock-agentcore:us-east-1:260287467863:runtime/pipelineleakagent_pipeline_leak_agent-9djKrBCyoX`
+- Status: **READY** — tested with FP-001, correctly classifies false positives
+- Wired `AgentCoreAdapter` in `src/app/adapters/agentcore_agent.py` — calls deployed agent via boto3, parses SSE response into structured `InvestigationResult`
+- Deployment package at `agentcore-deploy/pipelineleakagent/` with all 6 tools + data files
+- Model: Sonnet 4.5 (`us.anthropic.claude-sonnet-4-5-20250929-v1:0`)
+
+### For Sujoy (UI)
+To use the deployed agent from the UI, set `AGENT_MODE=agentcore`:
+```bash
+AGENT_MODE=agentcore streamlit run src/app/streamlit_app.py --server.port 3000
+```
+The adapter handles the full invocation + response parsing automatically.
+
+### For Sriram
+All 6 tools (yours + mine) are deployed and working in AgentCore. The system prompt enforces the 3-phase workflow.
+
+---
+
 ## 2026-09-16 — Naitik: Fixed integration issues, agent runs end-to-end
 
 ### What changed

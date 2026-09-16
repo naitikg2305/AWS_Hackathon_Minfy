@@ -1,0 +1,5 @@
+pipelineleakagent/agentcore/
+pipelineleakagent/app/pipeline_leak_agent/data/
+__pycache__/
+*.pyc
+.venv/
