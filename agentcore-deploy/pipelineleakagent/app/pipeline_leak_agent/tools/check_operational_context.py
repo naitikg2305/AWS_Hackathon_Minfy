@@ -32,6 +32,7 @@ def _load_valve_status():
         _valve_df = pd.read_csv(
             DATA_DIR / "valve_status.csv", parse_dates=["date"]
         )
+        # Fix the join gotcha: valve_status uses bare "01" while everything else uses "SEG-01"
         _valve_df["segment_id"] = "SEG-" + _valve_df["segment_id"].astype(str).str.zfill(2)
     return _valve_df
 
@@ -57,6 +58,9 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
     window_start = event_ts - pd.Timedelta(hours=1)
     window_end = event_ts + pd.Timedelta(minutes=30)
 
+    # --- 1. Check compressor status changes ---
+    # Use a wider lookback (6 hours) since compressor starts in the labeled data
+    # often precede the observed pressure anomaly by several hours
     compressor_lookback = event_ts - pd.Timedelta(hours=6)
     scada_comp_window = scada[
         (scada["station_id"] == station_id)
@@ -86,10 +90,14 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
         for c in compressor_changes
     )
 
+    # Also check for compressor_start event flags in the wider window
     compressor_flags = scada_comp_window[scada_comp_window["event_flag"] == "compressor_start"]
     if not compressor_flags.empty:
         has_compressor_start = True
 
+    # --- 2. Check valve position changes ---
+    # Use wider window (6 hours) for valve changes too — labeled valve_change events
+    # can be hours after the actual SCADA valve_change flag
     valve_lookback = event_ts - pd.Timedelta(hours=6)
     scada_valve_window = scada[
         (scada["station_id"] == station_id)
@@ -113,6 +121,8 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
     valve_event_flags = scada_valve_window[scada_valve_window["event_flag"] == "valve_change"]
     has_valve_change = len(valve_changes_scada) > 0 or not valve_event_flags.empty
 
+    # --- 3. Check temperature / line pack ---
+    # Look back 12 hours for temperature trends — line pack effects can lag
     weather_window = weather[
         (weather["timestamp"] >= event_ts - pd.Timedelta(hours=12))
         & (weather["timestamp"] <= window_end)
@@ -130,15 +140,32 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
             "frost_heave_risk": weather_window["frost_heave_risk"].iloc[-1],
         }
 
+    # Temperature-driven line pack effects can happen anytime there's been a
+    # significant temp swing in the preceding hours — not just early morning.
+    # Use a higher threshold to avoid false matches on real leaks.
     significant_temp_swing = temp_drop > 15
 
+    # Check if line_pack dropped in SCADA (correlates with temperature)
     line_pack_vals = scada_window["line_pack_mmscf"].values
     line_pack_drop = 0.0
     if len(line_pack_vals) > 1:
         line_pack_drop = float(max(line_pack_vals) - min(line_pack_vals))
 
-    has_temp_line_pack = significant_temp_swing and line_pack_drop > 0.03
+    # Temperature-driven line pack effects produce small apparent deficits
+    # (typically <0.06 MMSCFD in the data). If the actual MBD is significantly
+    # elevated, the anomaly can't be explained by temperature alone — a real
+    # leak produces line pack drops too, so using line_pack_drop as a reference
+    # is circular.
+    mbd_vals = scada_window["mass_balance_deficit_mmscfd"]
+    mbd_max_in_window = float(mbd_vals.max()) if len(mbd_vals) > 0 else 0.0
 
+    has_temp_line_pack = (
+        significant_temp_swing
+        and line_pack_drop > 0.03
+        and mbd_max_in_window < 0.15
+    )
+
+    # --- 4. Determine likely explanation ---
     explanations = []
     if has_compressor_start:
         explanations.append({
@@ -184,3 +211,24 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
             **temp_context,
         },
     }
+
+
+if __name__ == "__main__":
+    import json
+
+    # Test real leak — should find NO operational cause
+    print("=== LK-003 (real leak, ST-03):")
+    r1 = check_operational_context("ST-03", "2026-01-28T00:00:00")
+    print(json.dumps(r1, indent=2, default=str))
+    print()
+
+    # Test FP-001 — compressor start
+    print("=== FP-001 (compressor_start, ST-01):")
+    r2 = check_operational_context("ST-01", "2025-12-04T07:00:00")
+    print(json.dumps(r2, indent=2, default=str))
+    print()
+
+    # Test FP-003 — temperature line pack
+    print("=== FP-003 (temperature_line_pack, ST-02):")
+    r3 = check_operational_context("ST-02", "2025-12-11T05:00:00")
+    print(json.dumps(r3, indent=2, default=str))

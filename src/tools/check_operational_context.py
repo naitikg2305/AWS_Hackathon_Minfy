@@ -151,7 +151,19 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
     if len(line_pack_vals) > 1:
         line_pack_drop = float(max(line_pack_vals) - min(line_pack_vals))
 
-    has_temp_line_pack = significant_temp_swing and line_pack_drop > 0.03
+    # Temperature-driven line pack effects produce small apparent deficits
+    # (typically <0.06 MMSCFD in the data). If the actual MBD is significantly
+    # elevated, the anomaly can't be explained by temperature alone — a real
+    # leak produces line pack drops too, so using line_pack_drop as a reference
+    # is circular.
+    mbd_vals = scada_window["mass_balance_deficit_mmscfd"]
+    mbd_max_in_window = float(mbd_vals.max()) if len(mbd_vals) > 0 else 0.0
+
+    has_temp_line_pack = (
+        significant_temp_swing
+        and line_pack_drop > 0.03
+        and mbd_max_in_window < 0.15
+    )
 
     # --- 4. Determine likely explanation ---
     explanations = []
