@@ -30,10 +30,10 @@ Hackathon project: an agentic AI that analyzes SCADA pipeline data, distinguishe
 - Cap every tool return to <150 words structured output.
 - Port 8080 is VS Code. Use 3000+ for dev servers.
 
-## Team Branches
-- `data-logic` — Person 1: detection logic and tool functions
-- `agent` — Person 2: Strands agent, system prompt, orchestration
-- `deploy-ui` — Person 3: Streamlit UI, AgentCore deployment
+## Team
+- **Naitik** (Person 1) — Data & Detection Logic: `query_scada`, `check_operational_context`, `locate_leak`
+- **Sriram** (Person 2) — Agent Architecture & Orchestration: `get_segment_risk_profile`, `lookup_operating_envelope`, `get_regulatory_guidance`, Strands agent + system prompt
+- **Sujoy** (Person 3) — Deploy, UI & Demo: `generate_incident_report`, Streamlit UI, AgentCore deployment
 
 ## Git Sync Rule (ALWAYS FOLLOW THIS)
 
@@ -44,7 +44,8 @@ Hackathon project: an agentic AI that analyzes SCADA pipeline data, distinguishe
 ```
 1. git pull
 2. Do the work
-3. Update collab/personX/PLAN.md with what you did (append, don't overwrite)
+3. Update collab/<name>/PLAN.md with what you did (append, don't overwrite)
+   Folders: collab/naitik/, collab/sriram/, collab/sujoy/
 4. git add -A
 5. git commit with a clear message
 6. git push
@@ -58,7 +59,7 @@ The PLAN.md update should be a short log entry with a timestamp, like:
 - Next: add weather cross-reference
 ```
 
-**Ask the user which person they are (1, 2, or 3) at the start of every new session** so you update the right PLAN.md.
+**Ask the user which person they are (Naitik, Sriram, or Sujoy) at the start of every new session** so you update the right PLAN.md.
 
 ## Commands
 ```bash
