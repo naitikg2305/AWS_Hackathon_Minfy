@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from strands import tool
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 _scada_df = None
@@ -14,6 +15,7 @@ def _load_scada():
     return _scada_df
 
 
+@tool
 def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
     """
     Pull SCADA readings for a station within a time window.

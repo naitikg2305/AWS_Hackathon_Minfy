@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from strands import tool
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 _scada_df = None
@@ -22,6 +23,7 @@ def _load_segments():
     return _segments_df
 
 
+@tool
 def locate_leak(station_id: str, event_time: str) -> dict:
     """
     Estimate leak location (mile marker) using pressure gradient between

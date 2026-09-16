@@ -4,6 +4,21 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-09-16 — Naitik: Fixed integration issues, agent runs end-to-end
+
+### What changed
+- Added `@tool` decorator to all 3 of my tools (Strands requires it)
+- Fixed model ID: `us.anthropic.claude-sonnet-4-20250514-v1:0` is LEGACY/unavailable. Changed to `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Sonnet 4.5, ACTIVE)
+- Tested full agent pipeline: FP-001 correctly classified as FALSE POSITIVE with evidence chains and citations
+
+### For Sriram
+Your code integrated cleanly. One fix: the model ID had to change — Sonnet 4 is LEGACY in this lab account. Sonnet 4.5 works.
+
+### For Sujoy
+Agent is working end-to-end. You can run `python3 -m src.main FP-001` to test.
+
+---
+
 ## 2026-09-16 — Naitik: Full validation — 20/20 events pass (100%)
 
 ### What changed

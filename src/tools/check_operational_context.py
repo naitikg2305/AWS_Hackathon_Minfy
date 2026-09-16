@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from strands import tool
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 _scada_df = None
@@ -36,6 +37,7 @@ def _load_valve_status():
     return _valve_df
 
 
+@tool
 def check_operational_context(station_id: str, event_time: str) -> dict:
     """
     Check whether an anomaly at a given station/time has an operational explanation.
