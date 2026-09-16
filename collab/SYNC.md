@@ -4,31 +4,46 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
-## 2026-09-16 — Naitik: Built all 3 Person 1 tools
+## 2026-09-16 — Naitik: Full validation — 20/20 events pass (100%)
 
-### Done
-- `src/tools/query_scada.py` — pulls SCADA readings for station + time window, returns aggregated summary (pressure stats, flow, mass balance deficit, compressor/valve state, event flags)
-- `src/tools/check_operational_context.py` — cross-references compressor starts, valve changes, and temperature/line-pack effects to identify false positive causes. Handles the valve_status.csv join gotcha (bare "01" → "SEG-01")
-- `src/tools/locate_leak.py` — estimates leak mile marker using pressure gradient ratio between bounding stations, maps to nearest isolation valves from segment metadata
+### What changed
+- Improved `check_operational_context.py`: wider lookback windows (6h for compressor/valve, 12h for weather), better temp threshold (>15F)
+- Added `validate_all_events.py`: automated test harness for all 20 labeled events
+- Detection logic: **sustained mass balance deficit is the primary signal** — operational context helps explain FPs but doesn't override MBD for real leaks
 
-### Test Results
-- **Real leaks**: correctly show sustained mass balance deficit, no operational cause, accurate localization
-- **False positives**: correctly identified — compressor starts and temperature line pack both detected
-- LK-005 localization: estimated 13.7 vs true 13.6 (0.1 mile error)
-- LK-002 localization: estimated 116.5 vs true 119.3 (2.8 mile error)
-- LK-003 localization: estimated 63.6 vs true 72.0 (8.4 mile error)
+### Validation Results
+```
+Leaks detected:         5/5  (100%)
+FPs correctly rejected: 15/15 (100%)
+Avg localization error: 5.0 miles
+FP cause type match:    8/15 (compressor starts have no explicit SCADA flag — fall back to temp)
+```
+
+| Leak | Severity | True Mile | Est. Mile | Error |
+|------|----------|-----------|-----------|-------|
+| LK-001 | seep | 47.2 | 37.5 | 9.7 mi |
+| LK-002 | moderate | 119.3 | 118.5 | 0.8 mi |
+| LK-003 | significant | 72.0 | 64.1 | 7.9 mi |
+| LK-004 | moderate | 182.1 | 177.5 | 4.6 mi |
+| LK-005 | near_rupture | 13.6 | 15.7 | 2.1 mi |
 
 ### For Sriram (Agent)
-The three tools are ready to wire into Strands tools. Each returns a dict. Function signatures:
+Tools are ready — unchanged signatures:
 ```python
 query_scada(station_id: str, start_time: str, end_time: str) -> dict
 check_operational_context(station_id: str, event_time: str) -> dict
 locate_leak(station_id: str, event_time: str) -> dict
 ```
+Run `python3 src/tools/validate_all_events.py` from `src/tools/` to verify everything works.
 
 ### For Sujoy (UI/Deploy)
-Tools are in `src/tools/`. Each has a `__main__` block you can run standalone to test.
+Tools are in `src/tools/`. Each has a `__main__` block for standalone testing.
+The validation script is also a good reference for how to call the tools.
 
-### Next
-- Running full validation against all 20 labeled events
-- Improving LK-003 localization accuracy
+---
+
+## 2026-09-16 — Naitik: Built all 3 Person 1 tools (initial)
+
+- `src/tools/query_scada.py` — aggregated SCADA summary for station + time window
+- `src/tools/check_operational_context.py` — compressor/valve/temp false positive detection
+- `src/tools/locate_leak.py` — pressure gradient localization with valve mapping

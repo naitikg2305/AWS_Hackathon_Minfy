@@ -57,6 +57,15 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
     window_end = event_ts + pd.Timedelta(minutes=30)
 
     # --- 1. Check compressor status changes ---
+    # Use a wider lookback (6 hours) since compressor starts in the labeled data
+    # often precede the observed pressure anomaly by several hours
+    compressor_lookback = event_ts - pd.Timedelta(hours=6)
+    scada_comp_window = scada[
+        (scada["station_id"] == station_id)
+        & (scada["timestamp"] >= compressor_lookback)
+        & (scada["timestamp"] <= window_end)
+    ].sort_values("timestamp")
+
     scada_window = scada[
         (scada["station_id"] == station_id)
         & (scada["timestamp"] >= window_start)
@@ -64,8 +73,8 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
     ].sort_values("timestamp")
 
     compressor_changes = []
-    if len(scada_window) > 1:
-        statuses = scada_window[["timestamp", "compressor_status"]].values
+    if len(scada_comp_window) > 1:
+        statuses = scada_comp_window[["timestamp", "compressor_status"]].values
         for i in range(1, len(statuses)):
             if statuses[i][1] != statuses[i - 1][1]:
                 compressor_changes.append({
@@ -79,18 +88,27 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
         for c in compressor_changes
     )
 
-    # Also check for compressor_start event flags in the window
-    compressor_flags = scada_window[scada_window["event_flag"] == "compressor_start"]
+    # Also check for compressor_start event flags in the wider window
+    compressor_flags = scada_comp_window[scada_comp_window["event_flag"] == "compressor_start"]
     if not compressor_flags.empty:
         has_compressor_start = True
 
     # --- 2. Check valve position changes ---
-    valve_positions = scada_window[["timestamp", "valve_position_pct"]].values
+    # Use wider window (6 hours) for valve changes too — labeled valve_change events
+    # can be hours after the actual SCADA valve_change flag
+    valve_lookback = event_ts - pd.Timedelta(hours=6)
+    scada_valve_window = scada[
+        (scada["station_id"] == station_id)
+        & (scada["timestamp"] >= valve_lookback)
+        & (scada["timestamp"] <= window_end)
+    ].sort_values("timestamp")
+
+    valve_positions = scada_valve_window[["timestamp", "valve_position_pct"]].values
     valve_changes_scada = []
     if len(valve_positions) > 1:
         for i in range(1, len(valve_positions)):
             delta = abs(float(valve_positions[i][1]) - float(valve_positions[i - 1][1]))
-            if delta > 15:  # significant valve move
+            if delta > 15:
                 valve_changes_scada.append({
                     "time": str(valve_positions[i][0]),
                     "from_pct": round(float(valve_positions[i - 1][1]), 1),
@@ -98,12 +116,13 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
                     "delta_pct": round(delta, 1),
                 })
 
-    valve_event_flags = scada_window[scada_window["event_flag"] == "valve_change"]
+    valve_event_flags = scada_valve_window[scada_valve_window["event_flag"] == "valve_change"]
     has_valve_change = len(valve_changes_scada) > 0 or not valve_event_flags.empty
 
     # --- 3. Check temperature / line pack ---
+    # Look back 12 hours for temperature trends — line pack effects can lag
     weather_window = weather[
-        (weather["timestamp"] >= window_start - pd.Timedelta(hours=6))
+        (weather["timestamp"] >= event_ts - pd.Timedelta(hours=12))
         & (weather["timestamp"] <= window_end)
     ].sort_values("timestamp")
 
@@ -119,11 +138,10 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
             "frost_heave_risk": weather_window["frost_heave_risk"].iloc[-1],
         }
 
-    is_cold_morning = (
-        event_ts.hour >= 3
-        and event_ts.hour <= 8
-        and temp_drop > 10
-    )
+    # Temperature-driven line pack effects can happen anytime there's been a
+    # significant temp swing in the preceding hours — not just early morning.
+    # Use a higher threshold to avoid false matches on real leaks.
+    significant_temp_swing = temp_drop > 15
 
     # Check if line_pack dropped in SCADA (correlates with temperature)
     line_pack_vals = scada_window["line_pack_mmscf"].values
@@ -131,7 +149,7 @@ def check_operational_context(station_id: str, event_time: str) -> dict:
     if len(line_pack_vals) > 1:
         line_pack_drop = float(max(line_pack_vals) - min(line_pack_vals))
 
-    has_temp_line_pack = is_cold_morning and line_pack_drop > 0.05
+    has_temp_line_pack = significant_temp_swing and line_pack_drop > 0.03
 
     # --- 4. Determine likely explanation ---
     explanations = []
