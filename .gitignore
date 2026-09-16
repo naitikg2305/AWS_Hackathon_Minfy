@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+workshop-env/
+
+# Data files (large CSVs - each person downloads locally)
+data/*.csv
+data/reference_docs/*.pdf
+
+# Keep markdown reference docs
+!data/reference_docs/*.md
+
+# Node
+node_modules/
+.npm-global/
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AgentCore
+.agentcore/
+
+# Environment
+.env
+.env.local
+
+# Claude Code
+.claude/
