@@ -30,7 +30,6 @@ def classify_event(station_id, timestamp, segment_id=None, reported_rate=0.0):
 
     comp_starts = (window["event_flag"] == "compressor_start").sum()
     valve_changes = (window["event_flag"] == "valve_change").sum()
-    leak_flags = (window["event_flag"] == "leak").sum()
 
     weather = pd.read_csv(os.path.join(DATA_DIR, "weather_conditions.csv"), parse_dates=["timestamp"])
     w = weather[(weather["timestamp"] >= window_start - pd.Timedelta(hours=6)) & (weather["timestamp"] <= window_end)]
@@ -55,17 +54,12 @@ def classify_event(station_id, timestamp, segment_id=None, reported_rate=0.0):
         checks_clear += 1
     else:
         reasons.append(f"temp_drop {temp_drop:.1f}°F")
-    if leak_flags == 0:
-        checks_clear += 1
-    else:
-        reasons.append(f"leak_flags ({leak_flags} readings)")
 
     has_operational_cause = comp_starts > 0 or valve_changes > 0
     has_temp_cause = temp_drop >= 15 and readings_above < 3
     has_sustained_deficit = readings_above >= 3 and mean_deficit > 0.10
-    has_leak_flags = leak_flags >= 3
 
-    if has_leak_flags and has_sustained_deficit and not has_operational_cause:
+    if has_sustained_deficit and not has_operational_cause:
         classification = "LEAK"
         base_confidence = 85
         if reported_rate >= 0.3:
@@ -79,9 +73,6 @@ def classify_event(station_id, timestamp, segment_id=None, reported_rate=0.0):
     elif has_temp_cause and not has_sustained_deficit:
         classification = "FALSE_POSITIVE"
         base_confidence = 80
-    elif has_sustained_deficit:
-        classification = "LEAK"
-        base_confidence = 70
     else:
         classification = "FALSE_POSITIVE"
         base_confidence = 75

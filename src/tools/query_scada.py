@@ -43,9 +43,7 @@ def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
     if window.empty:
         return {"error": f"No data for {station_id} between {start_time} and {end_time}"}
 
-    event_flags = window["event_flag"].value_counts().to_dict()
-    has_leak_flag = "leak" in event_flags
-    has_fp_flag = "false_positive" in event_flags
+    operational_flags = window[window["event_flag"].isin(["compressor_start", "valve_change"])]["event_flag"].value_counts().to_dict()
 
     pressure = window["pressure_psi"]
     flow = window["flow_mmscfd"]
@@ -93,9 +91,7 @@ def query_scada(station_id: str, start_time: str, end_time: str) -> dict:
         "compressor_status": first_row["compressor_status"],
         "valve_position_pct_start": round(float(first_row["valve_position_pct"]), 1),
         "valve_position_pct_end": round(float(last_row["valve_position_pct"]), 1),
-        "event_flags": event_flags,
-        "has_leak_flag": has_leak_flag,
-        "has_false_positive_flag": has_fp_flag,
+        "operational_events": operational_flags,
     }
 
 

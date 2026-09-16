@@ -60,3 +60,17 @@ Also: Strands agent + system prompt, wiring all tools together
 - LK-002 full agent: confidence 72% HIGH, what-if shows $103K cost if delayed 48hrs, PHMSA damage threshold exceeded
 - LK-005 full agent: near-rupture correctly triggers ESD + immediate NRC notification
 - FP-001 full agent: correctly classified as false positive, no action needed
+
+## 2026-09-16 — Code review: removed all ground truth leakage and hardcoded values
+
+### Issues found and fixed
+1. **`query_scada.py`** — was exposing `event_flag` ground truth labels (`leak`, `false_positive`) to the agent. Replaced with `operational_events` that only surfaces `compressor_start` and `valve_change` (legitimate operational logs).
+2. **`live_agent.py`** — classification depended on `has_leak_flag` from ground truth. Now classifies purely from `mbd_sustained and not has_operational_cause`.
+3. **`lookup_operating_envelope.py`** — pressure/flow ranges were hardcoded. Rewrote to compute 5th-95th percentile envelopes from SCADA baseline data, read MAOP from `pipeline_segment_metadata.csv`.
+4. **`simulate_scenario.py`** — gas cost was hardcoded. Now derived from `gas_composition.csv` heating values × Henry Hub price. All other constants have source citations.
+5. **`compute_confidence.py`** — 4th FP check read from `labeled_false_positive_events.csv` (ground truth). Replaced with system-wide deficit analysis (checks if deficit is localized vs. all stations).
+6. **`batch_scorecard.py`** — `classify_event()` used `leak_flags` count from `event_flag` column. Removed entirely; classification now uses sustained deficit + operational cause only.
+
+### Verified
+- Batch scorecard: still 20/20 (100%) after all fixes
+- Full agent test (LK-002): all 8 tools fire correctly, analysis is entirely data-driven

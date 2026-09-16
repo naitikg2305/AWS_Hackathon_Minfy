@@ -74,12 +74,11 @@ class LiveToolAdapter(AgentAdapter):
         mbd = scada_result.get("mass_balance_deficit", {})
         mbd_sustained = mbd.get("sustained_above_0.1", False)
         mbd_max = mbd.get("max_mmscfd", 0)
-        has_leak_flag = scada_result.get("has_leak_flag", False)
         pressure_drop = scada_result.get("pressure", {}).get("drop_psi", 0)
 
-        if has_leak_flag or (mbd_sustained and not has_operational_cause):
+        if mbd_sustained and not has_operational_cause:
             classification = Classification.LIKELY_LEAK
-            confidence = min(0.98, 0.7 + (mbd_max * 0.3) + (0.1 if has_leak_flag else 0))
+            confidence = min(0.98, 0.7 + (mbd_max * 0.3))
 
             severity = self._determine_severity(mbd_max, pressure_drop)
 

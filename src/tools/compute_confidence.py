@@ -32,9 +32,19 @@ def compute_confidence(station_id: str, timestamp: str, segment_id: str, reporte
     w = weather[(weather["timestamp"] >= window_start - pd.Timedelta(hours=6)) & (weather["timestamp"] <= window_end)]
     temp_drop = (w["ambient_temp_f"].max() - w["ambient_temp_f"].min()) if len(w) >= 2 else 0
 
-    fp_events = pd.read_csv(os.path.join(DATA_DIR, "labeled_false_positive_events.csv"))
-    fp_events["timestamp"] = pd.to_datetime(fp_events["timestamp"])
-    fp_match = len(fp_events[(fp_events["station_id"] == station_id) & (abs((fp_events["timestamp"] - ts).dt.total_seconds()) < 7200)])
+    # Check if deficit is localized (one segment) vs. system-wide (all segments = temp effect)
+    all_stations_scada = pd.read_csv(os.path.join(DATA_DIR, "scada_timeseries.csv"), parse_dates=["timestamp"])
+    other_stations = [s for s in all_stations_scada["station_id"].unique() if s != station_id]
+    system_wide_deficit = False
+    if other_stations:
+        other_window = all_stations_scada[
+            (all_stations_scada["station_id"].isin(other_stations))
+            & (all_stations_scada["timestamp"] >= ts - pd.Timedelta(hours=1))
+            & (all_stations_scada["timestamp"] <= ts + pd.Timedelta(minutes=30))
+        ]
+        if not other_window.empty:
+            other_mean_deficit = other_window["mass_balance_deficit_mmscfd"].mean()
+            system_wide_deficit = other_mean_deficit > 0.10
 
     checks_clear = 0
     check_details = []
@@ -53,11 +63,11 @@ def compute_confidence(station_id: str, timestamp: str, segment_id: str, reporte
         check_details.append(f"Temp drop {temp_drop:.1f}°F (below 15°F threshold)")
     else:
         check_details.append(f"TEMP DROP {temp_drop:.1f}°F (above 15°F threshold)")
-    if fp_match == 0:
+    if not system_wide_deficit:
         checks_clear += 1
-        check_details.append("No known FP pattern match")
+        check_details.append("Deficit is localized (not system-wide)")
     else:
-        check_details.append(f"MATCHES {fp_match} known FP event(s)")
+        check_details.append("SYSTEM-WIDE deficit detected (suggests temperature/line pack, not localized leak)")
 
     scores["fp_checks"] = checks_clear / 4.0
     details["fp_checks"] = check_details

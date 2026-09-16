@@ -1,4 +1,18 @@
+import os
+import pandas as pd
 from strands import tool
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data")
+
+
+def _estimate_gas_cost_per_mmscf() -> float:
+    gc = pd.read_csv(os.path.join(DATA_DIR, "gas_composition.csv"))
+    avg_heating_value = gc["heating_value_btu_scf"].mean()
+    # Dataset values (~103,000) are BTU per 100 SCF; actual ~1,030 BTU/SCF
+    btu_per_scf = avg_heating_value / 100
+    price_per_mmbtu = 3.50  # representative Henry Hub price
+    cost_per_scf = (btu_per_scf / 1_000_000) * price_per_mmbtu
+    return round(cost_per_scf * 1_000_000, 0)  # cost per MMSCF
 
 
 @tool
@@ -11,13 +25,20 @@ def simulate_scenario(current_leak_rate: float, scenario: str = "continue", dura
         duration_hours: Hours to project forward.
         new_leak_rate: New leak rate for 'escalate' scenario (MMSCFD).
     """
-    PHMSA_GAS_THRESHOLD = 3.0  # MMSCF
-    PHMSA_DAMAGE_THRESHOLD = 50000  # USD
-    GAS_COST_PER_MMSCF = 3500  # approximate $/MMSCF at ~$3.50/MCF
+    # Source: 49 CFR 191.3 — incident definition
+    PHMSA_GAS_THRESHOLD = 3.0
+    # Source: 49 CFR 191.3 — property damage threshold
+    PHMSA_DAMAGE_THRESHOLD = 50000
+    # Derived from gas_composition.csv avg heating value × Henry Hub price
+    GAS_COST_PER_MMSCF = _estimate_gas_cost_per_mmscf()
+    # Source: one-pager.md — "$100K+ per unnecessary shutdown"
     SHUTDOWN_COST_PER_EVENT = 100000
+    # Source: one-pager.md — "PHMSA penalties up to $2.7M per violation"
     PHMSA_MAX_PENALTY = 2700000
-    ESD_TRIGGER = 1.0  # MMSCFD
-    ISOLATION_TRIGGER = 0.3  # MMSCFD
+    # Source: Operating Procedures Section 4.1 — ESD when rate >1.0
+    ESD_TRIGGER = 1.0
+    # Source: Operating Procedures Section 3.1 Step 4 — isolate when >0.3
+    ISOLATION_TRIGGER = 0.3
 
     if scenario == "double":
         rate = current_leak_rate * 2
