@@ -38,13 +38,13 @@ class TestQueryScada:
         result = query_scada("ST-01", "2020-01-01T00:00:00", "2020-01-01T01:00:00")
         assert "error" in result
 
-    def test_leak_event_has_leak_flag(self):
+    def test_leak_event_has_sustained_deficit(self):
         result = query_scada("ST-05", "2026-01-05T00:00:00", "2026-01-05T00:15:00")
-        assert result.get("has_leak_flag") is True
+        assert result["mass_balance_deficit"]["sustained_above_0.15"] is True
 
-    def test_normal_period_has_no_leak_flag(self):
+    def test_normal_period_has_no_sustained_deficit(self):
         result = query_scada("ST-01", "2025-12-01T12:00:00", "2025-12-01T13:00:00")
-        assert result.get("has_leak_flag") is False
+        assert result["mass_balance_deficit"]["sustained_above_0.15"] is False
 
 
 # --- check_operational_context ---

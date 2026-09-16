@@ -76,7 +76,13 @@ class LiveToolAdapter(AgentAdapter):
         mbd_max = mbd.get("max_mmscfd", 0)
         pressure_drop = scada_result.get("pressure", {}).get("drop_psi", 0)
 
-        if mbd_sustained and not has_operational_cause:
+        explanations = context_result.get("explanations", [])
+        has_mechanical_cause = any(
+            e.get("type") in ("compressor_start", "valve_change") for e in explanations
+        )
+        has_only_temp = has_operational_cause and not has_mechanical_cause
+
+        if mbd_sustained and (not has_operational_cause or has_only_temp):
             classification = Classification.LIKELY_LEAK
             confidence = min(0.98, 0.7 + (mbd_max * 0.3))
 

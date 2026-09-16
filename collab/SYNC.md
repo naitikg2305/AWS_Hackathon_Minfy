@@ -4,6 +4,22 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-09-16 — Sujoy: Fixed regression from ground truth removal, updated audit
+
+### What changed
+- **REGRESSION FIX**: Sriram's ground truth removal exposed a latent bug — `check_operational_context`'s 12-hour temperature lookback always triggers for all events (diurnal swings >15°F). Fixed `live_agent.py` to distinguish mechanical causes (compressor/valve) from temperature-only: sustained localized MBD overrides temperature explanation. All 20/20 still pass.
+- **Test fix**: Updated `test_tools.py` to use new `sustained_above_0.15` key (was `has_leak_flag` which was removed)
+- **Updated `collab/sujoy/review.md`** — Re-audited against latest codebase. Added RESOLVED section for 5 fixed issues. Remaining: 3 P0, 4 P1, 8 P2, 4 P3.
+- 89/89 tests passing, 20/20 batch scorecard
+
+### For Sriram
+Your ground truth removal was correct and important. The temperature interaction needed one more adapter fix — now done. The `check_operational_context` tool itself is fine; the adapter just needed to weight mechanical causes higher than temperature-only for sustained deficits.
+
+### For Naitik
+No changes to your tools or AgentCore deployment.
+
+---
+
 ## 2026-09-16 — Sujoy: Created comprehensive post-hackathon submission document
 
 ### What changed
