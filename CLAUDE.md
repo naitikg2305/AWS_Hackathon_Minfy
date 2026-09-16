@@ -35,6 +35,31 @@ Hackathon project: an agentic AI that analyzes SCADA pipeline data, distinguishe
 - `agent` — Person 2: Strands agent, system prompt, orchestration
 - `deploy-ui` — Person 3: Streamlit UI, AgentCore deployment
 
+## Git Sync Rule (ALWAYS FOLLOW THIS)
+
+**Before every task:** run `git pull` to get the latest from all team members.
+
+**After every task:** update your person's PLAN.md and push. Every time.
+
+```
+1. git pull
+2. Do the work
+3. Update collab/personX/PLAN.md with what you did (append, don't overwrite)
+4. git add -A
+5. git commit with a clear message
+6. git push
+```
+
+The PLAN.md update should be a short log entry with a timestamp, like:
+```
+## 2026-09-16 19:30 — Built anomaly detection tool
+- Created `src/tools/query_scada.py`
+- Tested against 5 labeled leaks, 4/5 detected
+- Next: add weather cross-reference
+```
+
+**Ask the user which person they are (1, 2, or 3) at the start of every new session** so you update the right PLAN.md.
+
 ## Commands
 ```bash
 pip install -r requirements.txt
