@@ -8,12 +8,7 @@ build/
 venv/
 workshop-env/
 
-# Data files (large CSVs - each person downloads locally)
-data/*.csv
-data/reference_docs/*.pdf
-
-# Keep markdown reference docs
-!data/reference_docs/*.md
+# Keep data files in repo so team can clone with everything
 
 # Node
 node_modules/
