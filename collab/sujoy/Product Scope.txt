@@ -1,0 +1,13 @@
+Product Scope:
+
+The application should answer one question:
+
+Is this alarm a real leak, what evidence supports the conclusion, where is it located, and what should the operator do next?
+
+Your application should have one primary screen with five sections:
+
+Alarm queue
+Leak or false-positive classification
+Pipeline segment and estimated location
+Evidence chain and alternatives considered
+Recommended operator response

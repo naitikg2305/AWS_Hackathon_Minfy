@@ -1,0 +1,95 @@
+{
+  "event_id": "FP-003",
+  "status": "completed",
+  "classification": "FALSE_POSITIVE",
+  "confidence": 0.91,
+  "severity": null,
+  "affected_segment": null,
+  "estimated_location": null,
+  "summary": "Pressure decline of 17.5 PSI at ST-02 correlates with overnight ambient temperature drop from 59.0°F to 42.6°F. Gas contraction reduced line pack from 6.49 to 6.46 MMSCF, mimicking a leak signature. Pressure recovered as temperature stabilized. No sustained mass balance deficit detected.",
+  "observations": [
+    {
+      "label": "Pressure decline at ST-02",
+      "value": "763.88 → 760.82 PSI over the early morning window",
+      "station_id": "ST-02",
+      "timestamp": "2025-12-11T05:00:00"
+    },
+    {
+      "label": "Ambient temperature drop",
+      "value": "59.0°F at 03:00 → 42.6°F at 04:00 (16.4°F drop in one hour)",
+      "station_id": "ST-02",
+      "timestamp": "2025-12-11T04:00:00"
+    },
+    {
+      "label": "Line pack contraction",
+      "value": "6.4948 → 6.4626 MMSCF — consistent with gas thermal contraction",
+      "station_id": "ST-02",
+      "timestamp": "2025-12-11T05:00:00"
+    },
+    {
+      "label": "Pressure recovery",
+      "value": "Recovered to 770.32 PSI by 05:15 as temperature stabilized at 64.2°F",
+      "station_id": "ST-02",
+      "timestamp": "2025-12-11T05:15:00"
+    },
+    {
+      "label": "Mass balance deficit",
+      "value": "Ranged -0.028 to +0.033 MMSCFD — within normal noise, no sustained deficit",
+      "station_id": "ST-02",
+      "timestamp": "2025-12-11T05:00:00"
+    }
+  ],
+  "alternatives_considered": [
+    {
+      "cause": "leak",
+      "result": "ruled_out",
+      "reason": "Mass balance deficit resolved after temperature stabilized. No persistent gas loss. Pressure decline magnitude and timing correlate with ambient temperature change."
+    },
+    {
+      "cause": "compressor_start",
+      "result": "ruled_out",
+      "reason": "No compressor status change recorded at ST-02 during the investigation window."
+    },
+    {
+      "cause": "valve_change",
+      "result": "ruled_out",
+      "reason": "No valve position change recorded at ST-02 during the investigation window."
+    }
+  ],
+  "integrity_context": null,
+  "recommended_actions": [
+    {
+      "priority": 1,
+      "action": "Continue normal monitoring — no emergency response required",
+      "basis": "Pipeline Operating Procedures — temperature-correlated pressure transient"
+    },
+    {
+      "priority": 2,
+      "action": "Log temperature-correlated pressure event for shift handover",
+      "basis": "Pipeline Operating Procedures — shift handover checklist"
+    }
+  ],
+  "citations": [
+    {
+      "source": "scada_timeseries.csv",
+      "locator": "ST-02, 2025-12-11T04:45:00 through 2025-12-11T05:20:00",
+      "claim": "Pressure declined from 763.88 to 760.82 PSI then recovered to 770.32 PSI; line pack contracted from 6.49 to 6.46 MMSCF"
+    },
+    {
+      "source": "weather_conditions.csv",
+      "locator": "2025-12-11T03:00 through 2025-12-11T05:00",
+      "claim": "Ambient temperature dropped from 59.0°F to 42.6°F overnight with frost heave risk flagged at 04:00"
+    },
+    {
+      "source": "labeled_false_positive_events.csv",
+      "locator": "FP-003",
+      "claim": "Labeled as temperature_line_pack false positive — pressure drop 17.5 PSI, duration 11 minutes"
+    },
+    {
+      "source": "pipeline_operating_procedures.md",
+      "locator": "Section 2 — Compressor and Valve Transient Signatures",
+      "claim": "Temperature drops cause gas contraction and line pack reduction, producing pressure transients that mimic leak signatures"
+    }
+  ],
+  "trace_id": "demo-trace-fp003"
+}

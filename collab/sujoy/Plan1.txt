@@ -1,0 +1,288 @@
+I would build Approach A as the core, then add a controlled response card from Approach C after a leak is confirmed. Do not attempt the full B dashboard or regulatory form generation initially.
+Your Person 3 mission is:
+Build the operator experience and deployment path against mock responses now, then replace the mock adapter with Person 2’s working agent.
+1. Lock the product scope
+The application should answer one question:
+Is this alarm a real leak, what evidence supports the conclusion, where is it located, and what should the operator do next?
+Your application should have one primary screen with five sections:
+1. Alarm queue
+2. Leak or false-positive classification
+3. Pipeline segment and estimated location
+4. Evidence chain and alternatives considered
+5. Recommended operator response
+Add two secondary capabilities only if the core works:
+* Integrity context from Approach B, such as CP, ILI, and encroachment risk
+* Response recommendation from Approach C, clearly labeled as decision support
+Do not initially build:
+* Full natural-language Q&A
+* Automatic PHMSA threshold determination
+* Form 7100.1 generation
+* Automatic valve-control actions
+* A complex multi-agent visualization
+The regulatory thresholds and valve recommendations should not be hard-coded until Person 2 verifies them against the supplied documents.
+2. Your first 15-minute team alignment
+Get these five decisions documented:
+DecisionRecommended answerFront endStreamlitCore userSCADA shift operatorPrimary questionReal leak or false positive?Agent invocationOne function returning structured JSONDemo eventsOne real leak, one compressor FP, one temperature FPAsk Person 2 to ultimately expose something equivalent to:
+investigate_event(
+    event_id: str,
+    station_id: str,
+    start_timestamp: str,
+    end_timestamp: str
+) -> dict
+You do not need to wait for it. Build a mock adapter with the same interface.
+3. Define the response contract first
+This is the most important work you can do before touching the UI.
+{
+  "event_id": "LK-002",
+  "status": "completed",
+  "classification": "LIKELY_LEAK",
+  "confidence": 0.94,
+  "severity": "moderate",
+  "affected_segment": "SEG-05",
+  "estimated_location": {
+    "mile_marker": 121.4,
+    "uncertainty_miles": 2.3
+  },
+  "summary": "Sustained mass-balance deficit with no corresponding compressor, valve, or weather transient.",
+  "observations": [
+    {
+      "label": "Pressure drop",
+      "value": "18.6 psi",
+      "station_id": "ST-05",
+      "timestamp": "2026-01-14T08:15:00Z"
+    }
+  ],
+  "alternatives_considered": [
+    {
+      "cause": "compressor_start",
+      "result": "ruled_out",
+      "reason": "No compressor start occurred within the investigation window."
+    },
+    {
+      "cause": "valve_change",
+      "result": "ruled_out",
+      "reason": "Valve positions remained stable."
+    },
+    {
+      "cause": "temperature_line_pack",
+      "result": "unlikely",
+      "reason": "Temperature movement was insufficient to explain the sustained deficit."
+    }
+  ],
+  "integrity_context": {
+    "ili_risk": "high",
+    "cp_status": "degraded",
+    "nearby_encroachment": true
+  },
+  "recommended_actions": [
+    {
+      "priority": 1,
+      "action": "Dispatch field verification",
+      "basis": "Pipeline operating procedure, relevant section"
+    }
+  ],
+  "citations": [
+    {
+      "source": "scada_timeseries.csv",
+      "locator": "ST-05, 2026-01-14T08:15:00Z",
+      "claim": "Sustained pressure decline"
+    },
+    {
+      "source": "pipeline_operating_procedures.md",
+      "locator": "Section 5.1",
+      "claim": "Transient evaluation criteria"
+    }
+  ],
+  "trace_id": "demo-trace-001"
+}
+Agree on this contract with Person 2 early. They can change field names, but the agent must return structured output rather than an unstructured paragraph.
+4. Start Claude Code
+Claude Code can be installed and started using:
+npm install -g @anthropic-ai/claude-code
+claude doctor
+
+cd pipeline-leak-agent
+git checkout -b person3-ui-agentcore
+claude --permission-mode plan
+Claude Code supports starting directly in plan mode, which is useful for reviewing the proposed structure before allowing edits. Anthropic Claude Code setup and Claude Code CLI reference.
+If the shared repository already exists, use that repository and create your own branch. Do not create a separate project that later has to be merged manually.
+5. Paste this as your first Claude Code prompt
+We are participating in an AWS Energy Hackathon and building a Pipeline Leak Detection and Integrity Agent using Claude, Strands Agents, and Amazon Bedrock AgentCore.
+
+I am Person 3 and own the operator application, integration, deployment, testing, and live-demo reliability.
+
+The core product is a real-time anomaly triage application for a SCADA shift operator. Given a pipeline alarm, it must show:
+
+1. Whether the event is likely a real leak or false positive
+2. Confidence and severity
+3. Affected pipeline segment and estimated mile marker
+4. Evidence supporting the conclusion
+5. Alternative explanations considered, including compressor starts, valve changes, weather, and line-pack effects
+6. Integrity context from inspection, cathodic protection, and encroachment data
+7. Recommended operator actions
+8. Citations to specific files, records, timestamps, and document sections
+
+Person 1 owns detection and data analysis.
+Person 2 owns the Claude/Strands agent and tool orchestration.
+I must not duplicate their internal logic.
+
+My application must communicate with the agent through a replaceable adapter:
+
+investigate_event(event_id, station_id, start_timestamp, end_timestamp) -> dict
+
+Until Person 2 provides the real agent, the application must use deterministic mock responses.
+
+Technical direction:
+- Python
+- Streamlit front end
+- Pydantic models for response validation
+- Separate mock and live AgentCore adapters
+- Clean separation between UI, schemas, adapters, and demo fixtures
+- Three demo fixtures: confirmed leak, compressor-start false positive, and temperature/line-pack false positive
+- Visible evidence citations
+- Visible loading, timeout, error, and insufficient-evidence states
+- No fabricated regulatory conclusions
+- No automatic operational action
+- Recommendations must be clearly labeled as decision support
+
+First inspect the repository and available files. Then produce:
+1. Proposed application architecture
+2. Proposed folder structure
+3. Response schema
+4. Implementation phases
+5. Integration assumptions
+6. Risks or conflicts with existing repository code
+
+Do not modify files yet. Wait for my approval after presenting the plan.
+This tells Claude exactly what you own and prevents it from drifting into Person 1 or Person 2’s work.
+6. After approving Claude’s plan
+Give Claude this second prompt:
+Implement Phase 1 only:
+
+1. Create the Pydantic response schema
+2. Create the replaceable agent adapter interface
+3. Create deterministic mock responses for:
+   - One confirmed leak
+   - One compressor-start false positive
+   - One temperature or line-pack false positive
+4. Build the Streamlit operator interface
+5. Add basic unit tests for schema validation and adapter behavior
+6. Add clear run instructions
+
+Do not implement detection algorithms, Claude orchestration, AgentCore deployment, PHMSA logic, or automatic valve recommendations.
+
+Run the application and tests. Report every file created or modified, test results, and any assumptions.
+7. Recommended UI
+Keep it to one strong operator console.
+Top row
+* Event ID
+* Classification
+* Confidence
+* Severity
+* Segment and location
+Center-left
+* Pressure, flow, and mass-balance timeline
+* Vertical marker showing anomaly onset
+* Affected station or segment highlighted
+Center-right
+* “Why this is likely a leak”
+* “Alternative explanations considered”
+* Integrity risk indicators
+Bottom
+* Recommended next actions
+* Expandable evidence and citations
+* Agent trace ID
+* Human acknowledgement button
+For false positives, the UI should visibly change:
+* Green or neutral classification
+* Clear transient cause
+* Supporting timestamps
+* “No emergency response recommended”
+* Continued-monitoring instruction
+8. Build against mocks before AgentCore
+Your initial folder structure could be:
+pipeline-leak-agent/
+  app/
+    streamlit_app.py
+    components/
+      alarm_queue.py
+      event_summary.py
+      evidence_panel.py
+      response_panel.py
+    adapters/
+      base.py
+      mock_agent.py
+      agentcore_agent.py
+    models/
+      investigation.py
+    fixtures/
+      confirmed_leak.json
+      compressor_fp.json
+      temperature_fp.json
+  tests/
+    test_models.py
+    test_mock_adapter.py
+  requirements.txt
+  README.md
+The agentcore_agent.py file can initially raise a “not configured” error. The UI should select the adapter through configuration:
+AGENT_MODE=mock
+Later:
+AGENT_MODE=agentcore
+AGENTCORE_RUNTIME_ARN=...
+9. Your AgentCore sequence
+Do not deploy until Person 2’s agent runs locally. The official AgentCore CLI flow supports local development, dry-run deployment, deployment, invocation, logs, and trace inspection. AWS AgentCore CLI guide.
+Your sequence should be:
+agentcore dev
+agentcore dev "Investigate event LK-002"
+
+agentcore deploy --dry-run
+agentcore deploy
+
+agentcore invoke "Investigate event LK-002"
+agentcore logs
+agentcore traces list
+AgentCore Observability can show the workflow steps, tool calls, and execution path, which is useful both for debugging and for demonstrating that this is genuinely agentic. AWS AgentCore Observability.
+10. Your two sync points
+Sync point 1, before Person 2 finishes
+Give Person 2:
+* Final JSON response contract
+* Adapter function signature
+* Three mock responses
+* Required error behavior
+* Expected citation format
+Ask Person 2 for:
+* Local invocation method
+* Streaming or non-streaming response
+* Runtime input payload
+* Agent timeout expectation
+* Final output schema
+* AgentCore runtime name and AWS Region
+Sync point 2, when the agent is ready
+Replace:
+MockAgentAdapter
+with:
+AgentCoreAdapter
+Then test all states:
+* Real leak
+* False positive
+* Insufficient evidence
+* Agent timeout
+* Invalid response
+* Missing citation
+* Deployment unavailable
+11. Demo strategy
+Do not run all 20 cases individually during the presentation.
+Use the 20 labeled events as an evaluation scorecard:
+* 5 real leaks
+* 15 false positives
+* Classification accuracy
+* False-positive reduction
+* Citation completeness
+* Average investigation time
+For the live demo, show only:
+1. One real leak in depth
+2. One compressor false positive
+3. Optionally, one temperature false positive
+The winning narrative is:
+“The agent does not merely detect a pressure drop. It investigates competing explanations, shows the evidence, localizes the probable leak, and gives the operator a grounded next action.”
+Your immediate target is not AgentCore deployment. It is a polished mock-driven operator UI with a frozen response contract. Once that exists, Person 2 can connect the real intelligence without forcing you to redesign the application.

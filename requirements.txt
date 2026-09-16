@@ -4,3 +4,6 @@ boto3
 pandas
 numpy
 streamlit
+pydantic>=2.0
+plotly>=5.0
+pytest

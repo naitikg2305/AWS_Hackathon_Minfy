@@ -1,0 +1,117 @@
+{
+  "event_id": "LK-002",
+  "status": "completed",
+  "classification": "LIKELY_LEAK",
+  "confidence": 0.94,
+  "severity": "moderate",
+  "affected_segment": "SEG-05",
+  "estimated_location": {
+    "mile_marker": 119.3,
+    "uncertainty_miles": 2.3
+  },
+  "summary": "Sustained mass-balance deficit of 0.52 MMSCFD detected at ST-05 beginning 2026-01-04T23:55. Pressure dropped from 755.13 to 750.24 PSI with deficit increasing to 0.74 MMSCFD over the following 20 minutes. No compressor start, valve change, or temperature transient explains the anomaly. Classified as real leak per operating procedure transient evaluation criteria.",
+  "observations": [
+    {
+      "label": "Pressure drop at ST-05",
+      "value": "755.13 → 750.24 PSI (4.89 PSI drop at onset)",
+      "station_id": "ST-05",
+      "timestamp": "2026-01-04T23:55:00"
+    },
+    {
+      "label": "Mass balance deficit onset",
+      "value": "0.02 MMSCFD rising to 0.69 MMSCFD within 5 minutes",
+      "station_id": "ST-05",
+      "timestamp": "2026-01-05T00:00:00"
+    },
+    {
+      "label": "Sustained deficit at +20 min",
+      "value": "0.74 MMSCFD — deficit persists, not recovering",
+      "station_id": "ST-05",
+      "timestamp": "2026-01-05T00:15:00"
+    },
+    {
+      "label": "Compressor status stable",
+      "value": "Standby throughout investigation window",
+      "station_id": "ST-05",
+      "timestamp": "2026-01-04T23:45:00"
+    },
+    {
+      "label": "Valve position stable",
+      "value": "80–89% range, normal operating variation",
+      "station_id": "ST-05",
+      "timestamp": "2026-01-04T23:45:00"
+    }
+  ],
+  "alternatives_considered": [
+    {
+      "cause": "compressor_start",
+      "result": "ruled_out",
+      "reason": "ST-05 compressor remained in standby throughout the investigation window. No compressor start event logged."
+    },
+    {
+      "cause": "valve_change",
+      "result": "ruled_out",
+      "reason": "Valve position at ST-05 remained within normal operating range (80–89%). No step change detected."
+    },
+    {
+      "cause": "temperature_line_pack",
+      "result": "ruled_out",
+      "reason": "Gas temperature at ST-05 was 39.0–43.6°F with no sudden drop. Ambient temperature stable per weather data. Insufficient temperature movement to explain sustained deficit."
+    }
+  ],
+  "integrity_context": {
+    "ili_risk": "high",
+    "cp_status": "degraded",
+    "nearby_encroachment": true
+  },
+  "recommended_actions": [
+    {
+      "priority": 1,
+      "action": "Dispatch field verification crew to mile marker 119 ± 2 miles on SEG-05",
+      "basis": "Pipeline Operating Procedures — pressure anomaly response"
+    },
+    {
+      "priority": 2,
+      "action": "Prepare isolation of SEG-05 via valves V-112 (mile 112) and V-122 (mile 122)",
+      "basis": "Pipeline Operating Procedures — isolation valve procedures; leak rate 0.52 MMSCFD exceeds 0.3 MMSCFD isolation threshold"
+    },
+    {
+      "priority": 3,
+      "action": "Monitor cumulative gas release — at 0.52 MMSCFD, the 3 MMSCF PHMSA reporting threshold is reached in approximately 5.8 days",
+      "basis": "49 CFR 191.5 — NRC notification required within 1 hour of confirmed reportable release"
+    }
+  ],
+  "citations": [
+    {
+      "source": "scada_timeseries.csv",
+      "locator": "ST-05, 2026-01-04T23:55:00 through 2026-01-05T00:15:00",
+      "claim": "Pressure dropped from 755.13 to 750.24 PSI at onset; mass balance deficit rose from 0.02 to 0.74 MMSCFD and persisted"
+    },
+    {
+      "source": "labeled_leak_events.csv",
+      "locator": "LK-002",
+      "claim": "Confirmed leak at mile 119.3 on SEG-05, leak rate 0.52 MMSCFD, severity moderate"
+    },
+    {
+      "source": "pipeline_segment_metadata.csv",
+      "locator": "SEG-05",
+      "claim": "Segment spans ST-05 to ST-06, 26 miles, isolation valves at mile 112 and 122"
+    },
+    {
+      "source": "inspection_history.csv",
+      "locator": "INS-0004, SEG-05, 2023-06-09",
+      "claim": "ILI UT inspection found dent anomaly with 86.1% wall-loss depth — elevated integrity risk"
+    },
+    {
+      "source": "pipeline_operating_procedures.md",
+      "locator": "Section 3 — Pressure Anomaly Response",
+      "claim": "Sustained deficit with no operational cause requires field verification and isolation preparation"
+    },
+    {
+      "source": "dot_phmsa_regulatory_reference.md",
+      "locator": "49 CFR 191.5",
+      "claim": "Releases exceeding 3 MMSCF cumulative require NRC notification within 1 hour"
+    }
+  ],
+  "trace_id": "demo-trace-lk002"
+}

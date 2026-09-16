@@ -1,0 +1,74 @@
+{
+  "event_id": "FP-001",
+  "status": "completed",
+  "classification": "FALSE_POSITIVE",
+  "confidence": 0.97,
+  "severity": null,
+  "affected_segment": null,
+  "estimated_location": null,
+  "summary": "Pressure transient at ST-01 consistent with compressor startup. Pressure fluctuated by ~14 PSI over a 19-minute window then returned to baseline. Mass balance deficit remained near zero throughout. No sustained gas loss detected.",
+  "observations": [
+    {
+      "label": "Pressure fluctuation at event onset",
+      "value": "772.28 PSI with swings to 758.37–777.04 PSI over 20 minutes",
+      "station_id": "ST-01",
+      "timestamp": "2025-12-04T07:00:00"
+    },
+    {
+      "label": "Compressor status",
+      "value": "Running at 3550 RPM throughout — consistent with active compressor operation",
+      "station_id": "ST-01",
+      "timestamp": "2025-12-04T07:00:00"
+    },
+    {
+      "label": "Mass balance deficit",
+      "value": "Ranged from -0.022 to +0.020 MMSCFD — within normal noise, no sustained deficit",
+      "station_id": "ST-01",
+      "timestamp": "2025-12-04T07:00:00"
+    },
+    {
+      "label": "Pressure recovery",
+      "value": "Returned to 774.57 PSI within 25 minutes — full recovery",
+      "station_id": "ST-01",
+      "timestamp": "2025-12-04T07:25:00"
+    }
+  ],
+  "alternatives_considered": [
+    {
+      "cause": "leak",
+      "result": "ruled_out",
+      "reason": "Pressure fully recovered within 25 minutes. Mass balance deficit did not persist. Pattern matches compressor startup transient signature per operating procedures."
+    }
+  ],
+  "integrity_context": null,
+  "recommended_actions": [
+    {
+      "priority": 1,
+      "action": "Continue normal monitoring — no emergency response required",
+      "basis": "Pipeline Operating Procedures — compressor transient response"
+    },
+    {
+      "priority": 2,
+      "action": "Verify compressor start event logged in SCADA event log for shift handover",
+      "basis": "Pipeline Operating Procedures — shift handover checklist"
+    }
+  ],
+  "citations": [
+    {
+      "source": "scada_timeseries.csv",
+      "locator": "ST-01, 2025-12-04T07:00:00 through 2025-12-04T07:25:00",
+      "claim": "Pressure swing of ~14 PSI with compressor running at 3550 RPM; recovery within 25 minutes"
+    },
+    {
+      "source": "labeled_false_positive_events.csv",
+      "locator": "FP-001",
+      "claim": "Labeled as compressor_start false positive — pressure drop 13.8 PSI, duration 19 minutes"
+    },
+    {
+      "source": "pipeline_operating_procedures.md",
+      "locator": "Section 2 — Compressor and Valve Transient Signatures",
+      "claim": "Compressor startups produce 15–25 PSI pressure surges lasting 10–20 minutes; this event falls within expected parameters"
+    }
+  ],
+  "trace_id": "demo-trace-fp001"
+}
