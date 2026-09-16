@@ -78,7 +78,7 @@ def render_confidence_panel(result: InvestigationResult, selected_event: dict):
             f'<div style="text-align:center;padding:20px;">'
             f'<div style="font-size:4em;font-weight:bold;color:{color};">{score}%</div>'
             f'<div style="font-size:1.3em;font-weight:bold;color:{color};">{label}</div>'
-            f'<div style="font-size:0.85em;color:#6c757d;margin-top:8px;">'
+            f'<div style="font-size:0.85em;opacity:0.6;margin-top:8px;">'
             f'Adapter confidence: {result.confidence:.0%}</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -93,7 +93,7 @@ def render_confidence_panel(result: InvestigationResult, selected_event: dict):
                 f'<span style="font-weight:bold;">{sig["name"]}</span>'
                 f'<span style="color:{sig_color};font-weight:bold;">{sig["score"]}%</span>'
                 f'</div>'
-                f'<div style="font-size:0.8em;color:#6c757d;">Weight: {sig["weight"]}% — {sig["detail"]}</div>'
+                f'<div style="font-size:0.8em;opacity:0.6;">Weight: {sig["weight"]}% — {sig["detail"]}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
@@ -109,8 +109,8 @@ def render_confidence_panel(result: InvestigationResult, selected_event: dict):
 
     st.markdown("---")
     st.markdown(
-        '<div style="background:#e8f4f8;border:1px solid #b8daff;border-radius:6px;'
-        'padding:10px 14px;font-size:0.85em;color:#004085;">'
+        '<div style="border:1px solid currentColor;border-radius:6px;'
+        'padding:10px 14px;font-size:0.85em;opacity:0.8;">'
         '<strong>How it works:</strong> Score is a weighted composite of 4 signals — '
         'FP checks clear (35%), MBD persistence (25%), leak rate severity (25%), '
         'and segment integrity risk (15%). Each signal is derived from measured data, '

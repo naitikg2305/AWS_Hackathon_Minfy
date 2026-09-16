@@ -106,8 +106,6 @@ def render_scenario_panel(result: InvestigationResult):
         with col:
             is_isolate = s["key"] == "isolate"
             border_color = "#28a745" if is_isolate else "#dc3545" if s["phmsa_breached"] else "#ffc107"
-            bg = "#f0fff0" if is_isolate else "#fff"
-
             badges = ""
             if s["phmsa_breached"]:
                 badges += (
@@ -122,15 +120,15 @@ def render_scenario_panel(result: InvestigationResult):
 
             st.markdown(
                 f'<div style="border:2px solid {border_color};border-radius:6px;padding:10px;'
-                f'background:{bg};font-size:0.85em;">'
+                f'font-size:0.85em;">'
                 f'<div style="font-weight:bold;color:{border_color};margin-bottom:6px;">'
                 f'{s["display_label"]}</div>'
                 f'<table style="width:100%;border-collapse:collapse;font-size:0.9em;">'
-                f'<tr><td style="color:#666;padding:2px 0;">Gas Loss</td>'
+                f'<tr><td style="opacity:0.7;padding:2px 0;">Gas Loss</td>'
                 f'<td style="text-align:right;font-weight:bold;padding:2px 0;">{s["gas_loss"]} MMSCF</td></tr>'
-                f'<tr><td style="color:#666;padding:2px 0;">Total Cost</td>'
+                f'<tr><td style="opacity:0.7;padding:2px 0;">Total Cost</td>'
                 f'<td style="text-align:right;font-weight:bold;padding:2px 0;">${s["total_cost"]}</td></tr>'
-                f'<tr><td style="color:#666;padding:2px 0;">Days to PHMSA</td>'
+                f'<tr><td style="opacity:0.7;padding:2px 0;">Days to PHMSA</td>'
                 f'<td style="text-align:right;font-weight:bold;padding:2px 0;">{s["time_to_threshold"]}</td></tr>'
                 f'</table>'
                 f'{f"<div style=&quot;margin-top:6px;&quot;>{badges}</div>" if badges else ""}'

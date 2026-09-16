@@ -11,8 +11,8 @@ def render_response_panel(result: InvestigationResult):
     with col_actions:
         st.markdown("### Recommended Actions")
         st.markdown(
-            '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;'
-            'padding:8px 14px;margin-bottom:12px;font-size:0.85em;color:#856404;">'
+            '<div style="border:1px solid #ffc107;border-radius:6px;'
+            'padding:8px 14px;margin-bottom:12px;font-size:0.85em;">'
             '⚠️ <strong>DECISION SUPPORT ONLY</strong> — All recommendations require '
             'human review and authorization before action.</div>',
             unsafe_allow_html=True,
@@ -20,8 +20,8 @@ def render_response_panel(result: InvestigationResult):
 
         if not is_leak:
             st.markdown(
-                '<div style="background:#d4edda;border:1px solid #28a745;border-radius:6px;'
-                'padding:10px 14px;margin-bottom:12px;color:#155724;font-weight:bold;">'
+                '<div style="border:1px solid #28a745;border-radius:6px;'
+                'padding:10px 14px;margin-bottom:12px;font-weight:bold;">'
                 '✓ No emergency response recommended. Continue normal monitoring.</div>',
                 unsafe_allow_html=True,
             )
@@ -34,9 +34,9 @@ def render_response_panel(result: InvestigationResult):
 
             st.markdown(
                 f'<div style="border-left:4px solid {color};padding:8px 12px;margin:8px 0;'
-                f'background:#f8f9fa;border-radius:0 4px 4px 0;">'
+                f'border-radius:0 4px 4px 0;">'
                 f'<strong>Priority {action.priority}:</strong> {action.action}<br>'
-                f'<span style="font-size:0.8em;color:#6c757d;">Basis: {action.basis}</span>'
+                f'<span style="font-size:0.8em;opacity:0.6;">Basis: {action.basis}</span>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
@@ -46,8 +46,8 @@ def render_response_panel(result: InvestigationResult):
 
         for i, cite in enumerate(result.citations):
             st.markdown(
-                f'<div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;'
-                f'padding:10px 14px;margin:6px 0;">'
+                f'<div style="border:1px solid currentColor;border-radius:6px;'
+                f'padding:10px 14px;margin:6px 0;opacity:0.9;">'
                 f'<strong>📄 {cite.source}</strong><br>'
                 f'<code style="font-size:0.85em;">{cite.locator}</code><br>'
                 f'<span style="font-size:0.9em;">{cite.claim}</span>'

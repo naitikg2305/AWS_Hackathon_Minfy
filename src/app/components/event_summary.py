@@ -37,7 +37,7 @@ def render_event_summary(result: InvestigationResult):
             sev_color = sev_colors.get(sev_text, "#6c757d")
             st.markdown(f'<span style="font-size:1.4em;font-weight:bold;color:{sev_color}">{sev_text}</span>', unsafe_allow_html=True)
         else:
-            st.markdown('<span style="font-size:1.4em;color:#6c757d">N/A</span>', unsafe_allow_html=True)
+            st.markdown('<span style="font-size:1.4em;opacity:0.5">N/A</span>', unsafe_allow_html=True)
 
     with col5:
         st.markdown("**Location**")
@@ -47,7 +47,7 @@ def render_event_summary(result: InvestigationResult):
         elif result.affected_segment:
             st.markdown(f"**{result.affected_segment}**")
         else:
-            st.markdown('<span style="color:#6c757d">N/A — no leak detected</span>', unsafe_allow_html=True)
+            st.markdown('<span style="opacity:0.5">N/A — no leak detected</span>', unsafe_allow_html=True)
 
     if is_leak:
         st.error(f"**{result.summary}**")
