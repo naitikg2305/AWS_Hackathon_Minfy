@@ -26,6 +26,21 @@ All 6 tools (yours + mine) are deployed and working in AgentCore. The system pro
 
 ---
 
+## 2026-09-16 — Sujoy: Integrated Sriram's confidence scoring & what-if scenarios into UI
+
+### What changed
+- New `src/app/components/confidence_panel.py` — calls `compute_confidence` tool, renders visual breakdown with progress bars for each of 4 weighted signals
+- New `src/app/components/scenario_panel.py` — calls `simulate_scenario` tool with 4 scenarios (continue/double/escalate/isolate), renders comparison cards with cost estimates and PHMSA triggers
+- Updated `src/app/streamlit_app.py` — added "Confidence Scoring" and "What-If Scenarios" tabs (scenarios only shown for leak events)
+
+### For Sriram
+Your `compute_confidence` and `simulate_scenario` tools are now fully integrated into the Streamlit UI. The confidence panel parses your text output into visual progress bars. The scenario panel lets operators adjust duration and escalation rate with sliders.
+
+### For Naitik
+No changes to tools or adapters. All 89 tests still pass.
+
+---
+
 ## 2026-09-16 — Naitik: Fixed integration issues, agent runs end-to-end
 
 ### What changed

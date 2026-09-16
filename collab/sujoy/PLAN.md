@@ -3,6 +3,25 @@
 Tools: `generate_incident_report`
 Also: Streamlit UI, AgentCore Runtime deployment, demo prep
 
+## 2026-09-16 20:05 — Integrated Sriram's confidence scoring & what-if scenarios into UI
+
+### Built:
+- `src/app/components/confidence_panel.py` — Renders data-driven confidence breakdown from `compute_confidence` tool: big score display, 4 signal progress bars (FP checks, MBD persistence, leak rate severity, integrity risk), FP check details
+- `src/app/components/scenario_panel.py` — Renders what-if scenario projections from `simulate_scenario` tool: 4 scenario comparison cards (continue/double/escalate/isolate), gas loss, cost estimates, PHMSA triggers, cost-of-delay analysis, interactive duration/rate sliders
+
+### Updated:
+- `src/app/streamlit_app.py` — Added 2 new tabs: "Confidence Scoring" (all events) and "What-If Scenarios" (leak events only). Now 5 tabs for leaks, 4 for FPs.
+
+### Tested:
+- Both tools callable from UI components — LK-002: 73% HIGH confidence, $103K cost if 48h delay
+- Streamlit restart clean, no import errors
+- 89/89 existing tests still passing
+
+### Next:
+- AgentCore deployment
+- generate_incident_report tool
+- Demo polish
+
 ## 2026-09-16 19:55 — Full UI + Live Tool Integration
 
 ### Built:

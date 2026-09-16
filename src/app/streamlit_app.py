@@ -14,6 +14,8 @@ from src.app.components.response_panel import render_response_panel
 from src.app.components.scada_chart import render_scada_chart
 from src.app.components.pipeline_map import render_pipeline_map
 from src.app.components.scorecard import render_scorecard
+from src.app.components.confidence_panel import render_confidence_panel
+from src.app.components.scenario_panel import render_scenario_panel
 
 st.set_page_config(
     page_title="Pipeline Leak Detection Agent",
@@ -122,11 +124,24 @@ else:
 
     st.markdown("---")
 
-    tab_analysis, tab_scada, tab_scorecard = st.tabs([
-        "Analysis & Response",
-        "SCADA Timeline",
-        "Evaluation Scorecard",
-    ])
+    is_leak = result.classification == Classification.LIKELY_LEAK
+
+    if is_leak:
+        tab_analysis, tab_confidence, tab_scenarios, tab_scada, tab_scorecard = st.tabs([
+            "Analysis & Response",
+            "Confidence Scoring",
+            "What-If Scenarios",
+            "SCADA Timeline",
+            "Evaluation Scorecard",
+        ])
+    else:
+        tab_analysis, tab_confidence, tab_scada, tab_scorecard = st.tabs([
+            "Analysis & Response",
+            "Confidence Scoring",
+            "SCADA Timeline",
+            "Evaluation Scorecard",
+        ])
+        tab_scenarios = None
 
     with tab_analysis:
         col_evidence, col_response = st.columns([1, 1])
@@ -136,6 +151,13 @@ else:
 
         with col_response:
             render_response_panel(result)
+
+    with tab_confidence:
+        render_confidence_panel(result, st.session_state.selected_event or {})
+
+    if tab_scenarios is not None:
+        with tab_scenarios:
+            render_scenario_panel(result)
 
     with tab_scada:
         render_scada_chart(result)
