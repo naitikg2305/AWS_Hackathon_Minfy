@@ -131,6 +131,7 @@ generate_incident_report(event_data: dict) -> dict
 - Cost-minimized on purpose: CodeZip build, PUBLIC network, OTel off, 5 min idle / 30 min max session, no Memory/Gateway/Evals, CSVs bundled in the zip. Don't add services without checking cost.
 - Public demo URL: Streamlit on one `t4g.micro` EC2 box (~$10/mo, stop it between demos). Scripts in `agentcore-deploy/ui-ec2/`, steps in `docs/deploy-agentcore.md`. Push to `main` then `sudo update-ui` on the box via SSM to update it.
 - Model is set by the runtime env var `MODEL_ID` (Sonnet 4.5). Haiku 4.5 is ~3x cheaper but untested against the 20 events.
+- Deployed agent scorecard (2026-10-19, after prompt fix): 20/20 classification, ~20 s per FP, ~30 s per leak. Re-check with `AWS_PROFILE=minfy-rnd .venv/bin/python src/tests/eval_agentcore_events.py` after any prompt/tool change.
 - Redeploy: `export AWS_PROFILE=minfy-rnd; cd agentcore-deploy/pipelineleakagent; cp ../../data/*.csv app/pipeline_leak_agent/data/; agentcore deploy -y`
 - UI against the deployed agent: `AWS_PROFILE=minfy-rnd AGENT_MODE=agentcore streamlit run src/app/streamlit_app.py --server.port 3000` (ARN auto-read from `agentcore/.cli/deployed-state.json`, or set `AGENTCORE_RUNTIME_ARN`).
 
@@ -142,6 +143,8 @@ generate_incident_report(event_data: dict) -> dict
 - Check Bedrock model IDs before hardcoding — models vary by lab account.
 - `agentcore deploy` enables CloudWatch Transaction Search account-wide (X-Ray indexing 100%). We reset it to 1%; don't re-enable OTel without checking cost.
 - `agentcore-deploy/.../app/pipeline_leak_agent/data/` is gitignored — copy `data/*.csv` in before every deploy or the tools find no files.
+- **The 20/20 hackathon validation covered the Python tools (`AGENT_MODE=live`), NOT the LLM agent.** The agent's system prompt had the old "temperature → false positive" rule and called every leak a false positive until 2026-10-19. Any change to the decision logic must go into BOTH `live_agent.py` AND the system prompt in `agentcore-deploy/.../main.py`, then re-run `src/tests/eval_agentcore_events.py` against the deployed runtime (costs ~20 Bedrock calls).
+- The UI parses the agent's answer from its first two lines (`CLASSIFICATION: LEAK|FALSE POSITIVE`, `SEVERITY: ...`). Keep that contract in the system prompt.
 
 ## Git Sync Rule (ALWAYS FOLLOW THIS — MANDATORY FOR EVERY CLAUDE SESSION)
 

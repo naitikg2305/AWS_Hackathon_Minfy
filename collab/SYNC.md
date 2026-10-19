@@ -4,6 +4,23 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-10-19 — Naitik: Agent was calling all 5 leaks FALSE POSITIVE — fixed, 20/20 on the deployed agent
+
+### What happened
+- Public UI (http://54.144.59.20/, `AGENT_MODE=agentcore`) showed every confirmed leak as a false positive. Root cause: the LLM system prompt still said "temperature drop explains it → FALSE POSITIVE", and `check_operational_context` flags temperature on nearly every event (12 h lookback). Sujoy's fix (sustained MBD beats temperature-only) only lived in `live_agent.py`. The hackathon demo ran `AGENT_MODE=live`, so the agent was never validated end to end.
+- Second bug: `agentcore_agent.py` classified FALSE_POSITIVE if the phrase appeared anywhere in the text (e.g. "not a false positive").
+
+### What changed
+- System prompt: validated decision rule + severity thresholds from `live_agent.py`; answer must start with `CLASSIFICATION: ...` / `SEVERITY: ...`; ~350-word cap (FP 30 s → 20 s, leak 66 s → 30 s).
+- Adapter parses the verdict line; severity regex fixed. UI streams the agent's text live and caches results per event for 2 h ("Re-run live agent" bypasses).
+- New `src/tests/eval_agentcore_events.py`: runs labeled events through the deployed runtime in parallel. **Result: 20/20 classification correct.** Severity exact on LK-003/LK-004; LK-001 and LK-002 graded one step too high, LK-005 graded significant instead of near_rupture (see Open).
+
+### Open
+- Severity: the UI window is onset−15 min … +30 min, so `max_mmscfd`/`drop_psi` in that window may not reach the near_rupture thresholds for LK-005; check `query_scada` numbers vs the thresholds in `_determine_severity` and align prompt + live adapter.
+- Public URL has no auth; stop the EC2 box between demo days.
+
+---
+
 ## 2026-10-19 — Naitik: Agent deployed to AgentCore in the Minfy R&D account (cost-minimized)
 
 ### What changed

@@ -2,6 +2,11 @@
 
 Tools: `query_scada`, `check_operational_context`, `locate_leak`
 
+## 2026-10-19 — Public UI + agent correctness fix
+
+- Hosted Streamlit on EC2 t4g.micro (public URL), streaming + per-event result cache
+- Found the deployed LLM agent classified all 5 leaks as FP (prompt never got the sustained-MBD rule); fixed prompt + UI parser; built `src/tests/eval_agentcore_events.py`; deployed agent now 20/20
+
 ## 2026-10-19 — Deployed agent to AgentCore (Minfy R&D account, cost-minimized)
 
 - Installed `@aws/agentcore` CLI, scaffolded `agentcore/` config, registered existing `app/pipeline_leak_agent` as BYO CodeZip Strands agent
