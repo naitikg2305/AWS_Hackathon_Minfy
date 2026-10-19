@@ -1,6 +1,8 @@
 import hmac
+import inspect
 import os
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -8,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import streamlit as st
 
 from src.app.adapters import get_adapter
-from src.app.models.investigation import Classification, Status
+from src.app.models.investigation import Classification, InvestigationResult, Status
 from src.app.components.alarm_queue import render_alarm_queue
 from src.app.components.event_summary import render_event_summary
 from src.app.components.evidence_panel import render_evidence_panel
@@ -59,24 +61,68 @@ if _APP_PASSWORD and not st.session_state.get("authed"):
 
 adapter = get_adapter()
 
+RESULT_CACHE_TTL_S = 2 * 60 * 60  # a full agent run takes ~30 s; share results across visitors for 2 h
+
+
+@st.cache_resource
+def _result_cache() -> dict:
+    """Server-wide {event_id: (unix_ts, InvestigationResult)} so repeat clicks are instant."""
+    return {}
+
+
+def _run_investigation(event: dict, force: bool = False) -> "InvestigationResult":
+    cache = _result_cache()
+    hit = cache.get(event["event_id"])
+    if hit and not force and time.time() - hit[0] < RESULT_CACHE_TTL_S:
+        st.session_state.result_from_cache_at = hit[0]
+        return hit[1]
+
+    status = st.status(
+        f"Agent investigating {event['event_id']} — live run usually takes 25–40 s "
+        "(6 tool calls + Bedrock reasoning). Streaming its analysis below:",
+        expanded=True,
+    )
+    live = status.empty()
+    chunks: list[str] = []
+
+    def _on_delta(text: str) -> None:
+        chunks.append(text)
+        live.markdown("".join(chunks)[-2500:])
+
+    kwargs = dict(
+        event_id=event["event_id"],
+        station_id=event.get("station_id", ""),
+        start_timestamp=event.get("start_timestamp", ""),
+        end_timestamp=event.get("end_timestamp", ""),
+    )
+    if "on_delta" in inspect.signature(adapter.investigate_event).parameters:
+        kwargs["on_delta"] = _on_delta
+    result = adapter.investigate_event(**kwargs)
+    status.update(label=f"Investigation of {event['event_id']} complete", state="complete", expanded=False)
+
+    if result.status != Status.ERROR:
+        cache[event["event_id"]] = (time.time(), result)
+    st.session_state.result_from_cache_at = None
+    return result
+
+
 selected = render_alarm_queue()
 
+to_investigate, force_live = None, False
 if selected and (
     st.session_state.selected_event is None
     or selected["event_id"] != st.session_state.selected_event.get("event_id")
 ):
-    st.session_state.selected_event = selected
+    to_investigate = selected
+elif st.session_state.pop("force_live_rerun", False) and st.session_state.selected_event:
+    to_investigate, force_live = st.session_state.selected_event, True
+
+if to_investigate:
+    st.session_state.selected_event = to_investigate
     st.session_state.acknowledged = False
     st.session_state.investigation_result = None
-
-    with st.spinner(f"Investigating event {selected['event_id']}..."):
-        result = adapter.investigate_event(
-            event_id=selected["event_id"],
-            station_id=selected.get("station_id", ""),
-            start_timestamp=selected.get("start_timestamp", ""),
-            end_timestamp=selected.get("end_timestamp", ""),
-        )
-        st.session_state.investigation_result = result
+    st.markdown("# Pipeline Leak Detection & Integrity Agent")
+    st.session_state.investigation_result = _run_investigation(to_investigate, force=force_live)
     st.rerun()
 
 result = st.session_state.investigation_result
@@ -131,6 +177,21 @@ elif result.status == Status.ERROR:
 
 else:
     st.markdown("# Pipeline Leak Detection & Integrity Agent")
+
+    cached_at = st.session_state.get("result_from_cache_at")
+    col_note, col_btn = st.columns([5, 1])
+    with col_note:
+        if cached_at:
+            st.caption(
+                f"Showing a cached agent result from {time.strftime('%H:%M:%S UTC', time.gmtime(cached_at))}. "
+                "Re-run to call the live agent again (~30 s)."
+            )
+        else:
+            st.caption("Live agent result from this session.")
+    with col_btn:
+        if st.button("Re-run live agent", use_container_width=True):
+            st.session_state.force_live_rerun = True
+            st.rerun()
 
     render_pipeline_map(result)
 

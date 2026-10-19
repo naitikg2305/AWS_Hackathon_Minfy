@@ -58,9 +58,11 @@ class AgentCoreAdapter(AgentAdapter):
         station_id: str,
         start_timestamp: str,
         end_timestamp: str,
+        on_delta=None,
     ) -> InvestigationResult:
+        """Run the agent. If on_delta is given it is called with each text chunk as it streams in."""
         try:
-            return self._invoke_and_parse(event_id, station_id, start_timestamp, end_timestamp)
+            return self._invoke_and_parse(event_id, station_id, start_timestamp, end_timestamp, on_delta)
         except Exception as e:
             return InvestigationResult(
                 event_id=event_id,
@@ -71,7 +73,7 @@ class AgentCoreAdapter(AgentAdapter):
             )
 
     def _invoke_and_parse(
-        self, event_id: str, station_id: str, start_timestamp: str, end_timestamp: str
+        self, event_id: str, station_id: str, start_timestamp: str, end_timestamp: str, on_delta=None
     ) -> InvestigationResult:
         prompt = (
             f"Analyze event {event_id}: pressure anomaly detected at station {station_id} "
@@ -86,27 +88,33 @@ class AgentCoreAdapter(AgentAdapter):
             payload=json.dumps({"prompt": prompt}).encode("utf-8"),
         )
 
-        body = response["response"].read().decode("utf-8")
-        text = self._extract_text_from_sse(body)
+        # Consume the SSE stream incrementally so the UI can show the agent's reasoning as it arrives.
+        text_parts = []
+        for raw in response["response"].iter_lines():
+            delta = self._delta_from_sse_line(raw.decode("utf-8", errors="replace"))
+            if delta:
+                text_parts.append(delta)
+                if on_delta is not None:
+                    on_delta(delta)
+        text = "".join(text_parts)
         trace_id = f"agentcore-{event_id}-{int(time.time())}"
 
         return self._parse_agent_response(event_id, station_id, start_timestamp, end_timestamp, text, trace_id)
 
+    @staticmethod
+    def _delta_from_sse_line(line: str) -> str:
+        line = line.strip()
+        if not line.startswith("data: "):
+            return ""
+        try:
+            data = json.loads(line[6:])
+        except json.JSONDecodeError:
+            return ""
+        delta = data.get("event", {}).get("contentBlockDelta", {}).get("delta", {})
+        return delta.get("text", "") if isinstance(delta, dict) else ""
+
     def _extract_text_from_sse(self, body: str) -> str:
-        text_parts = []
-        for line in body.split("\n"):
-            line = line.strip()
-            if not line.startswith("data: "):
-                continue
-            try:
-                data = json.loads(line[6:])
-                event = data.get("event", {})
-                delta = event.get("contentBlockDelta", {}).get("delta", {})
-                if "text" in delta:
-                    text_parts.append(delta["text"])
-            except json.JSONDecodeError:
-                continue
-        return "".join(text_parts)
+        return "".join(self._delta_from_sse_line(line) for line in body.split("\n"))
 
     def _parse_agent_response(
         self,
