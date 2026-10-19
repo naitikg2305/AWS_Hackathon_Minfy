@@ -127,9 +127,24 @@ class AgentCoreAdapter(AgentAdapter):
     ) -> InvestigationResult:
         text_upper = text.upper()
 
-        if "FALSE POSITIVE" in text_upper:
+        # 1) Preferred: the explicit verdict line the system prompt asks for
+        #    ("CLASSIFICATION: LEAK" / "CLASSIFICATION: FALSE POSITIVE"), tolerant of markdown decoration.
+        verdict_match = re.search(
+            r"CLASSIFICATION\**\s*[:\-–—]\s*\**\s*\[?\s*(FALSE\s+POSITIVE|POTENTIAL\s+LEAK|LIKELY\s+LEAK|LEAK)",
+            text_upper,
+        )
+        if verdict_match:
+            verdict = verdict_match.group(1)
+            classification = (
+                Classification.FALSE_POSITIVE if verdict.startswith("FALSE") else Classification.LIKELY_LEAK
+            )
+        # 2) Fallback for free-form answers: look for a verdict phrase, not a bare substring
+        #    ("not a false positive" must not count as FALSE POSITIVE).
+        elif re.search(r"(?<!NOT A )(?<!NOT )FALSE POSITIVE", text_upper) and not re.search(
+            r"(LIKELY|POTENTIAL|CONFIRMED)\s+LEAK", text_upper
+        ):
             classification = Classification.FALSE_POSITIVE
-        elif "LIKELY LEAK" in text_upper or "POTENTIAL LEAK" in text_upper or "**CLASSIFICATION**: LEAK" in text.upper():
+        elif re.search(r"(LIKELY|POTENTIAL|CONFIRMED)\s+LEAK", text_upper):
             classification = Classification.LIKELY_LEAK
         else:
             classification = Classification.INCONCLUSIVE
@@ -142,11 +157,13 @@ class AgentCoreAdapter(AgentAdapter):
 
         severity = None
         if classification == Classification.LIKELY_LEAK:
-            if "NEAR.?RUPTURE" in text_upper or "IMMEDIATE ESD" in text_upper:
+            sev_match = re.search(r"SEVERITY\**\s*[:\-–—]\s*\**\s*(NEAR[\s_\-]?RUPTURE|SIGNIFICANT|MODERATE|SEEP)", text_upper)
+            sev_word = sev_match.group(1) if sev_match else ""
+            if sev_word.startswith("NEAR") or (not sev_match and re.search(r"NEAR[\s_\-]?RUPTURE|IMMEDIATE ESD", text_upper)):
                 severity = Severity.NEAR_RUPTURE
-            elif "SIGNIFICANT" in text_upper:
+            elif sev_word == "SIGNIFICANT" or (not sev_match and "SIGNIFICANT" in text_upper):
                 severity = Severity.SIGNIFICANT
-            elif "MODERATE" in text_upper:
+            elif sev_word == "MODERATE" or (not sev_match and "MODERATE" in text_upper):
                 severity = Severity.MODERATE
             else:
                 severity = Severity.SEEP

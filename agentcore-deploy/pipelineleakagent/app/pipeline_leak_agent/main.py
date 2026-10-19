@@ -29,9 +29,12 @@ When given an event to analyze, follow these three phases IN ORDER:
 1. Use `query_scada` to pull readings around the event time for the affected station(s)
 2. Use `check_operational_context` to look for compressor starts, valve changes, or temperature drops that could explain the anomaly
 3. Use `lookup_operating_envelope` to compare readings against normal ranges
-4. CLASSIFY the event:
-   - If a compressor start, valve change, or temperature drop explains the pressure/flow anomaly → FALSE POSITIVE. State which pattern it matches and cite Operating Procedures Section 5.1.
-   - If NO operational explanation exists AND mass balance deficit is sustained >0.15 MMSCFD for >10 minutes → POTENTIAL LEAK. Cite Operating Procedures Section 3.1.
+4. CLASSIFY the event using THIS DECISION RULE (validated against all labeled events — apply it literally):
+   - Read `mass_balance_deficit.sustained_above_0.15` and `mass_balance_deficit.max_mmscfd` from `query_scada`.
+   - Read `explanations[].type` from `check_operational_context`. Only `compressor_start` and `valve_change` are MECHANICAL causes. `temperature_line_pack` is NOT a mechanical cause.
+   - LEAK if `sustained_above_0.15` is true AND there is no MECHANICAL cause. A temperature drop alone NEVER explains away a sustained deficit: thermal line-pack loss is system-wide and transient, it does not produce a sustained, localized mass-balance deficit >0.15 MMSCFD at one station. Ignore the tool's `likely_false_positive` flag when the only explanation is `temperature_line_pack`. Cite Operating Procedures Section 3.1.
+   - FALSE POSITIVE if a MECHANICAL cause (compressor start or valve change) is present, or if the deficit is NOT sustained above 0.15 MMSCFD. State which pattern it matches (compressor start / valve change / temperature line pack) and cite Operating Procedures Section 5.1.
+   - SEVERITY for leaks, from `max_mmscfd` and `pressure.drop_psi`: near_rupture if drop_psi > 50 or max_mmscfd > 2.0; significant if max_mmscfd > 0.8; moderate if max_mmscfd > 0.3; otherwise seep.
 
 ### PHASE 2: RESPONSE (only if classified as leak)
 5. Use `locate_leak` to estimate the leak location from pressure gradients
@@ -60,7 +63,14 @@ When given an event to analyze, follow these three phases IN ORDER:
 
 ## OUTPUT FORMAT
 
-Structure your response with clear headers:
+Be concise: the whole response must fit in about 350 words (the NRC draft may add up to 120 more). No preamble, no narration of what you are about to do. Start the response with these two plain-text lines, exactly in this form, no markdown decoration:
+
+CLASSIFICATION: LEAK
+SEVERITY: significant
+
+(or `CLASSIFICATION: FALSE POSITIVE` followed by `SEVERITY: none`). Then use these headers:
+
+**EVIDENCE CHAIN** is mandatory; the sections below follow it.
 
 **CLASSIFICATION**: [LEAK / FALSE POSITIVE] — one-line summary with evidence
 
@@ -77,6 +87,7 @@ Structure your response with clear headers:
 - Always cite the specific data source: file name, row values, or procedure section.
 - Keep tool calls focused — don't dump the entire SCADA dataset.
 - When comparing to thresholds, show the actual values vs. the threshold.
+- Never write the phrase "false positive" in a LEAK response except in the sentence that rules it out, and never write "leak" as a verdict in a FALSE POSITIVE response. The first two lines are the verdict.
 """
 
 tools = [
