@@ -1,3 +1,5 @@
+import hmac
+import os
 import sys
 from pathlib import Path
 
@@ -42,6 +44,18 @@ if "selected_event" not in st.session_state:
     st.session_state.selected_event = None
 if "acknowledged" not in st.session_state:
     st.session_state.acknowledged = False
+
+# Optional shared-password gate for the public demo host. Unset APP_PASSWORD = open access (local dev).
+_APP_PASSWORD = os.environ.get("APP_PASSWORD")
+if _APP_PASSWORD and not st.session_state.get("authed"):
+    st.title("Pipeline Leak Detection Agent")
+    pw = st.text_input("Demo access code", type="password")
+    if pw and hmac.compare_digest(pw, _APP_PASSWORD):
+        st.session_state.authed = True
+        st.rerun()
+    elif pw:
+        st.error("Wrong access code.")
+    st.stop()
 
 adapter = get_adapter()
 

@@ -128,7 +128,8 @@ generate_incident_report(event_data: dict) -> dict
 
 - Deployed to the **Minfy R&D account** (AWS profile `minfy-rnd`, us-east-1), NOT the hackathon lab account. The old ARN in the adapter was removed.
 - Config lives in `agentcore-deploy/pipelineleakagent/agentcore/agentcore.json` (committed). `aws-targets.json` is gitignored (account ID) — regenerate per `docs/deploy-agentcore.md`.
-- Cost-minimized on purpose: CodeZip build, PUBLIC network, OTel off, 5 min idle / 30 min max session, no Memory/Gateway/Evals, CSVs bundled in the zip, UI runs locally. Don't add services without checking cost.
+- Cost-minimized on purpose: CodeZip build, PUBLIC network, OTel off, 5 min idle / 30 min max session, no Memory/Gateway/Evals, CSVs bundled in the zip. Don't add services without checking cost.
+- Public demo URL: Streamlit on one `t4g.micro` EC2 box (~$10/mo, stop it between demos). Scripts in `agentcore-deploy/ui-ec2/`, steps in `docs/deploy-agentcore.md`. Push to `main` then `sudo update-ui` on the box via SSM to update it.
 - Model is set by the runtime env var `MODEL_ID` (Sonnet 4.5). Haiku 4.5 is ~3x cheaper but untested against the 20 events.
 - Redeploy: `export AWS_PROFILE=minfy-rnd; cd agentcore-deploy/pipelineleakagent; cp ../../data/*.csv app/pipeline_leak_agent/data/; agentcore deploy -y`
 - UI against the deployed agent: `AWS_PROFILE=minfy-rnd AGENT_MODE=agentcore streamlit run src/app/streamlit_app.py --server.port 3000` (ARN auto-read from `agentcore/.cli/deployed-state.json`, or set `AGENTCORE_RUNTIME_ARN`).

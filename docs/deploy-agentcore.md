@@ -69,3 +69,24 @@ cd agentcore-deploy/pipelineleakagent
 agentcore remove agent --name pipeline_leak_agent && agentcore deploy -y   # deletes the runtime + role
 # optional: aws cloudformation delete-stack --stack-name CDKToolkit (after emptying its S3 bucket)
 ```
+
+## Public demo URL (Streamlit on one small EC2 box)
+
+Added 2026-10-19. Cheapest AWS-native way to get a shareable link that can call the runtime with an IAM role instead of stored keys. No login for visitors.
+
+| Resource | Cost |
+| --- | --- |
+| EC2 `t4g.micro` (Graviton, 1 GB RAM + 2 GB swap), Amazon Linux 2023 | ~$0.0084/h, ~$6/mo if left on |
+| Public IPv4 (Elastic IP, so the URL survives stop/start) | ~$3.65/mo |
+| 8 GB gp3 root volume | ~$0.64/mo |
+| IAM role `pipeline-leak-ui-ec2-role` (InvokeAgentRuntime on our one runtime + SSM), security group tcp/80 | free |
+
+```bash
+cd agentcore-deploy/ui-ec2
+AWS_PROFILE=minfy-rnd ./setup-ui-infra.sh   # one-time: IAM role, instance profile, security group
+AWS_PROFILE=minfy-rnd ./deploy-ui.sh        # launches the box, prints http://<ip>/ ; app is up ~4 min later
+```
+
+The box clones `main` from GitHub and runs `streamlit run src/app/streamlit_app.py` on port 80 as a systemd service with `AGENT_MODE=agentcore`. Push to `main`, then run `sudo update-ui` on the box (via `aws ssm start-session --target <instance-id>`; there is no SSH port) to pick up changes.
+
+Stop the instance between demo days to stop compute billing; the URL stays the same when you start it again. Optional: set `APP_PASSWORD=...` in `/etc/pipeline-leak-ui.env` and restart the service to put a shared access code in front of it (anyone with the open URL can trigger Bedrock calls).
