@@ -2,6 +2,14 @@
 
 Tools: `query_scada`, `check_operational_context`, `locate_leak`
 
+## 2026-10-19 — Deployed agent to AgentCore (Minfy R&D account, cost-minimized)
+
+- Installed `@aws/agentcore` CLI, scaffolded `agentcore/` config, registered existing `app/pipeline_leak_agent` as BYO CodeZip Strands agent
+- Cost knobs: CodeZip, PUBLIC network, OTel off, 5 min idle / 30 min max lifecycle, no Memory/Gateway/Evals, CSVs in the zip, UI local
+- Deployed via CDK (auto-bootstrap), runtime READY, FP-001 smoke test correct in ~31 s
+- Reset the account-wide X-Ray indexing rule the CLI set to 100% back to 1%; 7-day log retention
+- `model/load.py` → `MODEL_ID` env var; adapter ARN lookup via env/deployed-state; `docs/deploy-agentcore.md` runbook
+
 ## 2026-09-16 — Full validation: 20/20 (100%)
 
 - Improved `check_operational_context.py` — wider lookback, better thresholds

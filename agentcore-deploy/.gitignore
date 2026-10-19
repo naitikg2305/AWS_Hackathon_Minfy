@@ -1,4 +1,11 @@
-pipelineleakagent/agentcore/
+# AgentCore CLI internals / generated CDK project (regenerated on every deploy)
+pipelineleakagent/agentcore/cdk/
+pipelineleakagent/agentcore/.cli/
+pipelineleakagent/agentcore/.cache/
+pipelineleakagent/agentcore/.env.local
+# Contains the AWS account ID — keep out of the public repo. See docs/deploy-agentcore.md.
+pipelineleakagent/agentcore/aws-targets.json
+# 21 MB of CSVs copied from ../../data at package time (see docs/deploy-agentcore.md)
 pipelineleakagent/app/pipeline_leak_agent/data/
 __pycache__/
 *.pyc

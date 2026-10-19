@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+from pathlib import Path
 
 import boto3
 
@@ -20,15 +21,34 @@ from src.app.models.investigation import (
     Citation,
 )
 
-RUNTIME_ARN = (
-    "arn:aws:bedrock-agentcore:us-east-1:260287467863:"
-    "runtime/pipelineleakagent_pipeline_leak_agent-9djKrBCyoX"
+# Deployed state written by `agentcore deploy` (gitignored; contains the account ID).
+_DEPLOYED_STATE = (
+    Path(__file__).resolve().parents[3]
+    / "agentcore-deploy" / "pipelineleakagent" / "agentcore" / ".cli" / "deployed-state.json"
 )
+
+
+def resolve_runtime_arn() -> str:
+    """AGENTCORE_RUNTIME_ARN env var, else the CLI's deployed-state.json, else a clear error."""
+    arn = os.environ.get("AGENTCORE_RUNTIME_ARN")
+    if arn:
+        return arn
+    if _DEPLOYED_STATE.exists():
+        state = json.loads(_DEPLOYED_STATE.read_text())
+        for target in state.get("targets", {}).values():
+            runtimes = target.get("resources", {}).get("runtimes", {})
+            for rt in runtimes.values():
+                if rt.get("runtimeArn"):
+                    return rt["runtimeArn"]
+    raise RuntimeError(
+        "No AgentCore runtime ARN found. Set AGENTCORE_RUNTIME_ARN or run `agentcore deploy` "
+        "(see docs/deploy-agentcore.md)."
+    )
 
 
 class AgentCoreAdapter(AgentAdapter):
     def __init__(self):
-        self.runtime_arn = os.environ.get("AGENTCORE_RUNTIME_ARN", RUNTIME_ARN)
+        self.runtime_arn = resolve_runtime_arn()
         self.region = os.environ.get("AWS_REGION", "us-east-1")
         self.client = boto3.client("bedrock-agentcore", region_name=self.region)
 

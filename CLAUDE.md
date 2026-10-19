@@ -35,9 +35,10 @@ One Strands agent with 7 tools. The agent receives a natural language question f
                           │
                           ▼
 ┌──────────────────────────────────────────────────────────────┐
-│              AgentCore Runtime (Sujoy)                        │
-│  Deployed via `agentcore dev --port 3000`                    │
-│  (port 8080 is VS Code — never use it)                       │
+│              AgentCore Runtime (DEPLOYED 2026-10-19)          │
+│  Minfy R&D account, us-east-1, profile `minfy-rnd`           │
+│  Runtime: pipelineleakagent_pipeline_leak_agent-xYeQ4WBuf7   │
+│  How: docs/deploy-agentcore.md (CodeZip, cost-minimized)     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -123,12 +124,23 @@ generate_incident_report(event_data: dict) -> dict
    - FP-001: compressor start false positive (disambiguation)
    - LK-005: near-rupture on SEG-01 (emergency response + PHMSA reporting)
 
+## AgentCore Deployment (DONE — Naitik, 2026-10-19)
+
+- Deployed to the **Minfy R&D account** (AWS profile `minfy-rnd`, us-east-1), NOT the hackathon lab account. The old ARN in the adapter was removed.
+- Config lives in `agentcore-deploy/pipelineleakagent/agentcore/agentcore.json` (committed). `aws-targets.json` is gitignored (account ID) — regenerate per `docs/deploy-agentcore.md`.
+- Cost-minimized on purpose: CodeZip build, PUBLIC network, OTel off, 5 min idle / 30 min max session, no Memory/Gateway/Evals, CSVs bundled in the zip, UI runs locally. Don't add services without checking cost.
+- Model is set by the runtime env var `MODEL_ID` (Sonnet 4.5). Haiku 4.5 is ~3x cheaper but untested against the 20 events.
+- Redeploy: `export AWS_PROFILE=minfy-rnd; cd agentcore-deploy/pipelineleakagent; cp ../../data/*.csv app/pipeline_leak_agent/data/; agentcore deploy -y`
+- UI against the deployed agent: `AWS_PROFILE=minfy-rnd AGENT_MODE=agentcore streamlit run src/app/streamlit_app.py --server.port 3000` (ARN auto-read from `agentcore/.cli/deployed-state.json`, or set `AGENTCORE_RUNTIME_ARN`).
+
 ## Key Gotchas (ALL TEAM MEMBERS READ THIS)
 - `valve_status.csv` segment_id is bare "01" — Naitik's tools already normalize this. If you read valve_status directly, add `"SEG-" + segment_id.zfill(2)`.
 - Don't paste 207K-row SCADA file into agent context. All tools return aggregated summaries.
 - Cap every tool return to <150 words structured output.
 - Port 8080 is VS Code. Use 3000+ for dev servers.
 - Check Bedrock model IDs before hardcoding — models vary by lab account.
+- `agentcore deploy` enables CloudWatch Transaction Search account-wide (X-Ray indexing 100%). We reset it to 1%; don't re-enable OTel without checking cost.
+- `agentcore-deploy/.../app/pipeline_leak_agent/data/` is gitignored — copy `data/*.csv` in before every deploy or the tools find no files.
 
 ## Git Sync Rule (ALWAYS FOLLOW THIS — MANDATORY FOR EVERY CLAUDE SESSION)
 

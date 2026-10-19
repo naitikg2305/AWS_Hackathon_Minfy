@@ -4,6 +4,27 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-10-19 — Naitik: Agent deployed to AgentCore in the Minfy R&D account (cost-minimized)
+
+### What changed
+- Runtime `pipelineleakagent_pipeline_leak_agent-xYeQ4WBuf7` is READY in the Minfy R&D account (us-east-1, profile `minfy-rnd`). Stack `AgentCore-pipelineleakagent-default` = 1 IAM role + 1 policy + 1 Runtime. Nothing else.
+- Smoke test: FP-001 → FALSE POSITIVE (temperature line pack) with full evidence chain, ~31 s.
+- `agentcore-deploy/pipelineleakagent/agentcore/agentcore.json` committed (was gitignored). CodeZip, PUBLIC, OTel off, 5 min idle / 30 min max, `MODEL_ID` env var (Sonnet 4.5).
+- `model/load.py` reads `MODEL_ID`; `src/app/adapters/agentcore_agent.py` no longer hardcodes the lab-account ARN (env var → `agentcore/.cli/deployed-state.json`).
+- New runbook `docs/deploy-agentcore.md` with redeploy/invoke/teardown commands and the cost table.
+
+### For Sujoy (UI)
+`AWS_PROFILE=minfy-rnd AGENT_MODE=agentcore streamlit run src/app/streamlit_app.py --server.port 3000` should now hit the live runtime. I only tested `agentcore invoke`, not the SSE parsing in the adapter — please check.
+
+### For Sriram (Agent)
+Still Sonnet 4.5. If you want to try Haiku 4.5 for cost, change `MODEL_ID` in `agentcore.json` and redeploy, then re-run the 20 events.
+
+### Open
+- Run all 20 labeled events against the deployed runtime.
+- Teardown after the hackathon: `agentcore remove agent --name pipeline_leak_agent && agentcore deploy -y`.
+
+---
+
 ## 2026-09-16 — Sujoy: Fixed regression from ground truth removal, updated audit
 
 ### What changed

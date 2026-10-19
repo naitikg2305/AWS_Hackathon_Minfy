@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.agentcore.aws.dev/v1/agentcore.json",
+  "name": "pipelineleakagent",
+  "version": 1,
+  "managedBy": "CDK",
+  "tags": {
+    "agentcore:created-by": "agentcore-cli",
+    "agentcore:project-name": "pipelineleakagent"
+  },
+  "runtimes": [
+    {
+      "name": "pipeline_leak_agent",
+      "build": "CodeZip",
+      "entrypoint": "main.py",
+      "codeLocation": "app/pipeline_leak_agent/",
+      "runtimeVersion": "PYTHON_3_12",
+      "networkMode": "PUBLIC",
+      "protocol": "HTTP",
+      "authorizerType": "AWS_IAM",
+      "description": "UC3 Pipeline Leak Detection agent (Strands + Bedrock Claude), cost-minimized CodeZip deploy",
+      "envVars": [
+        {
+          "name": "MODEL_ID",
+          "value": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        }
+      ],
+      "instrumentation": {
+        "enableOtel": false
+      },
+      "lifecycleConfiguration": {
+        "idleRuntimeSessionTimeout": 300,
+        "maxLifetime": 1800
+      }
+    }
+  ],
+  "memories": [],
+  "knowledgeBases": [],
+  "credentials": [],
+  "evaluators": [],
+  "onlineEvalConfigs": [],
+  "agentCoreGateways": [],
+  "policyEngines": [],
+  "configBundles": [],
+  "abTests": [],
+  "harnesses": [],
+  "datasets": [],
+  "capacityProviders": [],
+  "payments": []
+}
