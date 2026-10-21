@@ -2,6 +2,10 @@
 
 Tools: `query_scada`, `check_operational_context`, `locate_leak`
 
+## 2026-10-21 — Demo website on S3 + CloudFront
+
+- `website/` added from the handoff zip; deploy script; live at https://d1mmotfbiqqghm.cloudfront.net/; Minfy hostname pending IT
+
 ## 2026-10-21 — UI on ECS Express Mode (HTTPS)
 
 - Dockerfile + deploy script; ECS Express service live at https://pi-e4a940f7de9544eab171713c4ca21dfd.ecs.us-east-1.on.aws with access-code gate; EC2 box stopped as fallback

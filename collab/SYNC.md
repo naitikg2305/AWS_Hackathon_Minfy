@@ -4,6 +4,20 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-10-21 — Naitik: Demo website (handoff zip) hosted on S3 + CloudFront
+
+### What changed
+- Sujoy's handoff package (static page "From pipeline alarms to informed decisions" + 5:00 MP4) is now `website/site/` in the repo (checksums match the package) and live at **https://d1mmotfbiqqghm.cloudfront.net/** — HTTPS, HTTP→HTTPS redirect, correct content types incl. `image/avif` and `video/mp4`, byte-range seeking works (206), bucket is private (direct S3 → 403).
+- `website/deploy-website.sh` creates/updates everything (bucket, OAC, distribution, invalidation). Cost ≈ $0 (no fixed charge; egress in free tier).
+- Reconciled against the live Netlify preview: identical content; only the hero subheading markup differs (classes vs inline styles). Visual check welcome.
+- The internal handoff README is NOT in the repo (public). `*.zip` is now gitignored.
+
+### Next (per the handoff)
+- IT (Prashanth) to pick the Minfy hostname → `aws acm request-certificate` in us-east-1 → validation CNAME + `CNAME host → d1mmotfbiqqghm.cloudfront.net` → `HOSTNAME_ALIAS=… CERT_ARN=… ./deploy-website.sh`. Then send Sujoy the final URL (handoff says submit Oct 22 for the Nov 3 session).
+- Nobody should claim a live Quick integration because the page is up; the page wording already says "illustrative".
+
+---
+
 ## 2026-10-21 — Naitik: Public UI moved to ECS Express Mode (HTTPS + access code); EC2 box stopped
 
 ### What changed
