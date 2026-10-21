@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#19283c">
+  <meta name="description" content="Explore Minfy’s pipeline alarm triage application and the Amazon Quick integration concept using MCP. Watch the five-minute demo: operational evidence, conversational access and human review.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta property="og:title" content="Minfy Pipeline Intelligence + Amazon Quick | Energy Demo">
+  <meta property="og:description" content="A five-minute demonstration of Minfy’s pipeline application, with an illustrative Amazon Quick and MCP workflow.">
+  <meta property="og:type" content="website">
+  <title>Minfy Pipeline Intelligence + Amazon Quick | Energy Demo</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="nav-shell">
+    <a class="brand" href="https://minfytech.com/" aria-label="Minfy home"><img src="assets/minfy-logo.avif" alt="Minfy" width="130" height="44"></a>
+    <span class="nav-context">ENERGY / OIL &amp; GAS</span>
+    <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="navigation"><span></span><span></span></button>
+    <nav id="navigation" aria-label="Main navigation">
+      <a href="#demo">Watch the demo</a><a href="#workflow">The application</a><a href="#quick">Amazon Quick + MCP</a><a class="button button-small" href="#contact">Let’s talk <span aria-hidden="true">↗</span></a>
+    </nav>
+  </div>
+</header>
+<main id="main">
+  <section class="hero wrap">
+    <p class="eyebrow"><span class="square"></span> MINFY ENERGY DEMO / AMAZON QUICK + MCP</p>
+    <div class="hero-grid">
+      <div class="hero-heading"><h1>From pipeline alarms<br>to <em>informed decisions.</em></h1><p style="margin-top:22px;font-size:clamp(18px,1.7vw,23px);line-height:1.45;color:var(--navy)">Minfy pipeline intelligence. <span style="color:var(--blue)">Meet Amazon Quick.</span></p></div>
+      <div class="hero-copy"><p>Industry intelligence from Minfy.<br>A conversational entry point through Amazon Quick.</p><p class="intro">Explore Minfy’s pipeline alarm triage application and how Amazon Quick can bring its evidence and recommendations into a conversation through MCP.</p><div class="hero-actions"><a class="button" href="#demo">Watch the 5-minute demo <span aria-hidden="true">↓</span></a><a class="text-link" href="#quick">Explore Quick + MCP <span aria-hidden="true">↗</span></a></div></div>
+    </div>
+    <div class="technology-line"><span class="technology-label">THE DEMO STACK</span><span class="quick-emphasis">Amazon Quick</span><i aria-hidden="true"></i><span>Model Context Protocol (MCP)</span><i aria-hidden="true"></i><span>Amazon Bedrock AgentCore</span><i aria-hidden="true"></i><span>Anthropic Claude</span></div>
+  </section>
+
+  <section class="demo-section wrap" id="demo" aria-labelledby="demo-heading">
+    <div class="demo-intro"><div><p class="eyebrow">THE FIVE-MINUTE WALKTHROUGH</p><h2>See Minfy at work.<br><em>Explore the Amazon Quick connection.</em></h2></div><p>Start with two pipeline alarms in the working application, then see an illustrative Quick conversation showing how MCP can connect the investigation to a user’s questions.</p></div>
+    <div class="film-shell">
+      <div class="film-header"><div><span class="live-dot" aria-hidden="true"></span><span id="demo-heading">Minfy pipeline triage + Amazon Quick</span></div><span>APPLICATION WALKTHROUGH <span class="duration">5:00</span></span></div>
+      <div class="video-stage">
+        <video id="demo-video" controls playsinline preload="metadata" poster="assets/demo-poster.jpg" aria-label="Five-minute Minfy pipeline application demo with an illustrative Amazon Quick and MCP workflow" aria-describedby="video-caption">
+          <source src="assets/pipeline-demo.mp4" type="video/mp4">
+          Your browser does not support embedded video. <a href="assets/pipeline-demo.mp4">Download the walkthrough</a>.
+        </video>
+        <button class="video-cover" id="play-demo" aria-label="Play the application walkthrough"><span class="play-circle" aria-hidden="true">▶</span><span>Watch the walkthrough</span><small>Sound on · 5-minute demonstration</small></button>
+      </div>
+      <div class="film-caption" id="video-caption"><span>Minfy application walkthrough + illustrative Amazon Quick / MCP segment.</span><span>Demo data. Operator decisions remain human-led.</span></div>
+    </div>
+  </section>
+
+  <section class="workflow-section wrap section-space" id="workflow">
+    <div class="section-top"><p class="eyebrow">THE OPERATIONAL QUESTION</p><h2>A pressure drop is a signal.<br><em>What does it mean?</em></h2><p class="section-intro">A potential leak and an operating change can trigger similar alarms. The demonstration brings telemetry, operating context and procedures into one investigation.</p></div>
+    <div class="case-layout">
+      <div class="case-tabs" role="tablist" aria-label="Demonstration scenarios">
+        <button role="tab" id="tab-false" aria-controls="case-false" aria-selected="true" data-case="false"><span class="case-index">01</span><span><strong>Explain a false positive</strong><small>Temperature and line-pack change</small></span><span aria-hidden="true">↗</span></button>
+        <button role="tab" id="tab-leak" aria-controls="case-leak" aria-selected="false" tabindex="-1" data-case="leak"><span class="case-index">02</span><span><strong>Investigate a likely leak</strong><small>Sustained mass-balance deficit</small></span><span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="case-panel" role="tabpanel" id="case-false" aria-labelledby="tab-false">
+        <p class="case-status">DEMO EVENT FP-003 <span>False positive assessment</span></p>
+        <h3>The pressure changed.<br>The context explains why.</h3>
+        <p>The agent attributes the alarm to falling temperature and gas contraction in the line, with no sustained mass-balance deficit.</p>
+        <div class="evidence-row"><span>EVIDENCE</span><p>SCADA readings, operating context and the alarm timeline.</p></div>
+        <div class="evidence-row"><span>HUMAN REVIEW</span><p>Review the evidence and the recommendation to continue monitoring.</p></div>
+      </div>
+      <div class="case-panel" role="tabpanel" id="case-leak" aria-labelledby="tab-leak" hidden>
+        <p class="case-status">DEMO EVENT LK-003 <span class="alert">Likely leak assessment</span></p>
+        <h3>A sustained deficit.<br>A reason to investigate.</h3>
+        <p>The agent identifies a sustained mass-balance deficit without a mechanical explanation and marks an estimated location.</p>
+        <div class="evidence-row"><span>EVIDENCE</span><p>Flow trends, mass balance, an estimated segment and cited procedures.</p></div>
+        <div class="evidence-row"><span>HUMAN REVIEW</span><p>The operator reviews the recommended field verification and decides the response under established procedures.</p></div>
+      </div>
+    </div>
+    <div class="human-note"><span class="human-symbol" aria-hidden="true">◎</span><p><strong>Decision support, with the operator in control.</strong> The demonstration recommends next steps. It does not execute field actions or isolate the pipeline.</p></div>
+  </section>
+
+  <section class="quick-section" id="quick">
+    <div class="wrap">
+      <div class="quick-heading"><div><p class="eyebrow">MINFY + AMAZON QUICK / CONNECTED THROUGH MCP</p><h2>Ask in Amazon Quick.<br><em>Investigate with Minfy.</em></h2></div><p>The integration is designed to give users conversational access to Minfy’s pipeline intelligence in Amazon Quick. MCP provides the connection to exposed application tools. Minfy supplies the investigation logic, operational evidence and recommendations.</p></div>
+      <div class="quick-question"><span>ILLUSTRATIVE USER QUESTION IN AMAZON QUICK</span><blockquote>“Why was this pipeline alarm flagged, and what evidence should I review?”</blockquote><p>Intended flow: Quick calls an exposed Minfy tool through MCP, receives the investigation result and presents it for the operator’s review.</p></div>
+      <div class="integration" aria-label="Intended integration: Amazon Quick exchanges tool requests and investigation results through MCP with Minfy’s pipeline application">
+        <div class="integration-node"><span class="node-no">01 / ENGAGE</span><h3>Amazon Quick</h3><p>Ask operational questions and review returned investigation results in a conversation.</p><span class="node-tag">User interaction</span></div>
+        <div class="connector" aria-hidden="true"><span>↔</span></div>
+        <div class="integration-node mcp-node"><span class="node-no">02 / CONNECT</span><h3>MCP</h3><p>Expose selected Minfy application capabilities as tools that Amazon Quick can call.</p><span class="node-tag">Requests &amp; responses</span></div>
+        <div class="connector" aria-hidden="true"><span>↔</span></div>
+        <div class="integration-node"><span class="node-no">03 / INVESTIGATE</span><h3>Minfy pipeline application</h3><p>Analyze SCADA alarms using operating context and procedures, with evidence for human review.</p><span class="node-tag">AgentCore + Claude</span></div>
+      </div>
+      <div class="integration-foot"><span>DEMONSTRATION SCOPE</span><p>The video shows the working Minfy application and an illustrative Amazon Quick interaction. The Quick/MCP connection is being completed and tested. This diagram explains the intended integration, not a verified live end-to-end connection.</p></div>
+    </div>
+  </section>
+
+  <section class="next-section wrap section-space">
+    <div><p class="eyebrow">FROM DEMONSTRATION TO EVALUATION</p><h2>Start with your workflow.<br><em>Build the evidence together.</em></h2><p class="section-intro">A practical next step is a read-only evaluation against historical alarms and known outcomes.</p></div>
+    <ol class="evaluation-list"><li><span>01</span><div><h3>Choose one operational question</h3><p>Agree on the alarm workflow, users and decisions the evaluation should support.</p></div></li><li><span>02</span><div><h3>Scope the Amazon Quick connection</h3><p>Agree on the questions, exposed MCP tools, authentication and data access needed to bring Minfy’s investigation into Quick.</p></div></li><li><span>03</span><div><h3>Review with your operators</h3><p>Compare the evidence and recommendations with known outcomes before deciding what comes next.</p></div></li></ol>
+  </section>
+
+  <section class="contact-section" id="contact"><div class="wrap contact-inner"><div><p class="eyebrow">LET’S EXPLORE YOUR USE CASE</p><h2>Explore your Energy workflow<br>with Minfy and Amazon Quick.</h2><p>Talk to Minfy about pipeline alarm triage and a focused evaluation of the Quick/MCP connection.</p></div><a class="button button-yellow contact-link" href="mailto:Sujoy.bhattacharya@minfytech.com?subject=Minfy%20Energy%20demo%20and%20Amazon%20Quick%20inquiry">Connect with Minfy <span aria-hidden="true">↗</span></a></div></section>
+</main>
+<footer class="wrap footer"><a class="brand" href="https://minfytech.com/" aria-label="Visit Minfy website"><img src="assets/minfy-logo.avif" alt="Minfy" width="110" height="38" loading="lazy"></a><p>Energy innovation. Grounded in operational context.</p><a href="https://minfytech.com/">Explore Minfy <span aria-hidden="true">↗</span></a><small>© 2026 Minfy. All rights reserved.</small></footer>
+</body>
+</html>

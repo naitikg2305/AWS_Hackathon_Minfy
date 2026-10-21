@@ -32,3 +32,6 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# archives dropped into the repo (handoff zips etc.)
+*.zip
