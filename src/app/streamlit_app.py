@@ -30,7 +30,9 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .block-container { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    /* Streamlit's fixed header is ~3.75rem tall; too little top padding hides the page title under it */
+    .block-container { padding-top: 4rem; padding-bottom: 0.5rem; }
+    h1 { line-height: 1.2; padding-top: 0; }
     [data-testid="stMetricValue"] { font-size: 1.3rem; }
     .stTabs [data-baseweb="tab-list"] { gap: 8px; }
     .stTabs [data-baseweb="tab"] {
@@ -50,13 +52,21 @@ if "acknowledged" not in st.session_state:
 # Optional shared-password gate for the public demo host. Unset APP_PASSWORD = open access (local dev).
 _APP_PASSWORD = os.environ.get("APP_PASSWORD")
 if _APP_PASSWORD and not st.session_state.get("authed"):
-    st.title("Pipeline Leak Detection Agent")
-    pw = st.text_input("Demo access code", type="password")
-    if pw and hmac.compare_digest(pw, _APP_PASSWORD):
-        st.session_state.authed = True
-        st.rerun()
-    elif pw:
-        st.error("Wrong access code.")
+    st.markdown("<div style='height: 18vh'></div>", unsafe_allow_html=True)
+    _, gate, _ = st.columns([1, 1.2, 1])
+    with gate:
+        st.markdown(
+            "<h1 style='text-align:center; margin-bottom:0'>🛢️ Pipeline Leak Detection Agent</h1>"
+            "<p style='text-align:center; color:#888; margin-top:0.25rem'>Minfy demo · enter the access code to continue</p>",
+            unsafe_allow_html=True,
+        )
+        pw = st.text_input("Demo access code", type="password", label_visibility="collapsed",
+                           placeholder="Access code")
+        if pw and hmac.compare_digest(pw, _APP_PASSWORD):
+            st.session_state.authed = True
+            st.rerun()
+        elif pw:
+            st.error("Wrong access code.")
     st.stop()
 
 adapter = get_adapter()
