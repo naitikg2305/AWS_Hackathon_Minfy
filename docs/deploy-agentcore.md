@@ -70,7 +70,7 @@ agentcore remove agent --name pipeline_leak_agent && agentcore deploy -y   # del
 # optional: aws cloudformation delete-stack --stack-name CDKToolkit (after emptying its S3 bucket)
 ```
 
-## Public demo URL (Streamlit on one small EC2 box)
+## Public demo URL, v1 (Streamlit on one small EC2 box) — SUPERSEDED by ECS Express below; instance stopped 2026-10-21
 
 Added 2026-10-19. Cheapest AWS-native way to get a shareable link that can call the runtime with an IAM role instead of stored keys. No login for visitors.
 
@@ -118,3 +118,32 @@ The ARN is in `agentcore/.cli/deployed-state.json` under `pipeline_leak_mcp`.
 **To make it reachable from Amazon Quick** (not done, by decision): create a Cognito user pool + app client,
 set this runtime's `authorizerType` to `CUSTOM_JWT` with the pool's discovery URL and client ID, redeploy, then
 register the endpoint in Quick. Step-by-step in `docs/quick-mcp-integration.md` Section 3.
+
+## Public UI on ECS Express Mode with HTTPS (added 2026-10-21)
+
+Replaces the EC2 box. Amazon ECS Express Mode takes our container image and provisions a Fargate service, an
+Application Load Balancer with a TLS certificate, auto scaling and a public `https://` URL in one call.
+
+| Piece | Where |
+| --- | --- |
+| Image | `agentcore-deploy/ui-ecs-express/Dockerfile` (repo-root build context, Streamlit on 8080, non-root, no AWS keys) → ECR repo `pipeline-leak-ui`, built with podman |
+| Service | ECS Express service `pipeline-leak-ui` in cluster `default`, 0.5 vCPU / 1 GB, min=max=1 task → **https://pi-e4a940f7de9544eab171713c4ca21dfd.ecs.us-east-1.on.aws** |
+| Roles | infra `pipeline-leak-ui-express-infra-role` (trust ecs.amazonaws.com + SourceAccount, policy `service-role/AmazonECSInfrastructureRoleforExpressGatewayServices`), exec `ecsTaskExecutionRole` (pre-existing), task `pipeline-leak-ui-task-role` (only `bedrock-agentcore:InvokeAgentRuntime` on our runtime) |
+| Config | env `AGENTCORE_RUNTIME_ARN`, `AGENT_MODE=agentcore`, `APP_PASSWORD` (shared demo access code) |
+| Health | ALB checks `/_stcore/health` |
+| Logs | CloudWatch `/ecs/pipeline-leak-ui` |
+
+```bash
+cd agentcore-deploy/ui-ecs-express
+AWS_PROFILE=minfy-rnd APP_PASSWORD='<code>' ./deploy-ui-ecs-express.sh            # build + push + create/update, prints the URL
+AWS_PROFILE=minfy-rnd ./deploy-ui-ecs-express.sh --no-build                       # redeploy the image already in ECR
+aws ecs describe-express-gateway-service --service-arn <arn> --profile minfy-rnd  # status + URL
+```
+
+Cost running 24/7: Fargate ≈ $18/mo + ALB ≈ $16/mo ≈ **$35/mo**, about 3.5× the EC2 box, in exchange for HTTPS
+and no server to patch. Scale to zero between demo days with `update-express-gateway-service --scaling-target
+minTaskCount=0,...`; the ALB still bills until the service is deleted.
+
+Auth today is the shared access code (demo-grade). Next step for real sign-in: Streamlit `st.login` (OIDC) against
+Microsoft Entra, which needs this HTTPS URL as the redirect URI, then ask IT for a Minfy subdomain (CNAME to the
+ALB) and attach an ACM certificate for it.

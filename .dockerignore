@@ -1,0 +1,11 @@
+.venv/
+**/__pycache__/
+**/*.pyc
+.git/
+agentcore-deploy/pipelineleakagent/agentcore/cdk/
+agentcore-deploy/pipelineleakagent/agentcore/.cache/
+agentcore-deploy/pipelineleakagent/agentcore/.cli/
+agentcore-deploy/pipelineleakagent/app/pipeline_leak_agent/data/
+demo.mp4
+*.pdf
+*.docx
