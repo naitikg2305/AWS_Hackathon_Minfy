@@ -90,3 +90,31 @@ AWS_PROFILE=minfy-rnd ./deploy-ui.sh        # launches the box, prints http://<i
 The box clones `main` from GitHub and runs `streamlit run src/app/streamlit_app.py` on port 80 as a systemd service with `AGENT_MODE=agentcore`. Push to `main`, then run `sudo update-ui` on the box (via `aws ssm start-session --target <instance-id>`; there is no SSH port) to pick up changes.
 
 Stop the instance between demo days to stop compute billing; the URL stays the same when you start it again. Optional: set `APP_PASSWORD=...` in `/etc/pipeline-leak-ui.env` and restart the service to put a shared access code in front of it (anyone with the open URL can trigger Bedrock calls).
+
+## MCP server (added 2026-10-21)
+
+Second runtime `pipeline_leak_mcp` in `agentcore.json`, protocol **MCP**, entrypoint
+`app/pipeline_leak_agent/mcp_server.py`, same code/data/cost settings as the HTTP runtime. It exposes:
+
+| Tool | What it does | Time |
+| --- | --- | --- |
+| `investigate_pipeline_event(station_id, start_time, end_time, event_id="")` | Runs the validated agent (shared `prompt.py` + 6 tools), returns the verdict text (`CLASSIFICATION:` / `SEVERITY:` first lines, evidence, isolation, PHMSA status, NRC draft) | ~20 s FP, ~30 s leak |
+| `list_alarm_events(kind="all"|"leak"|"false_positive")` | Lists the 20 labeled events with station + window so a caller can pick one | <1 s |
+
+**Auth is IAM** (SigV4). Anything with credentials in the Minfy R&D account can call it; nothing on the public
+internet can. No Cognito, no Gateway, no extra cost beyond Bedrock tokens while a call runs.
+
+```bash
+export AWS_PROFILE=minfy-rnd
+.venv/bin/python src/tests/smoke_mcp_runtime.py                # initialize, tools/list, list_alarm_events
+.venv/bin/python src/tests/smoke_mcp_runtime.py --investigate  # + full agent run on FP-001
+```
+
+Endpoint URL (for MCP clients that can sign with SigV4, e.g. Strands `MCPClient` with `streamablehttp_client`
+plus an AWS auth helper, or Claude Code with an IAM-aware proxy):
+`https://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/<URL-encoded runtime ARN>/invocations?qualifier=DEFAULT`
+The ARN is in `agentcore/.cli/deployed-state.json` under `pipeline_leak_mcp`.
+
+**To make it reachable from Amazon Quick** (not done, by decision): create a Cognito user pool + app client,
+set this runtime's `authorizerType` to `CUSTOM_JWT` with the pool's discovery URL and client ID, redeploy, then
+register the endpoint in Quick. Step-by-step in `docs/quick-mcp-integration.md` Section 3.

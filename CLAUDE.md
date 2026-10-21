@@ -35,9 +35,11 @@ One Strands agent with 7 tools. The agent receives a natural language question f
                           │
                           ▼
 ┌──────────────────────────────────────────────────────────────┐
-│              AgentCore Runtime (DEPLOYED 2026-10-19)          │
-│  Minfy R&D account, us-east-1, profile `minfy-rnd`           │
-│  Runtime: pipelineleakagent_pipeline_leak_agent-xYeQ4WBuf7   │
+│              AgentCore Runtimes (Minfy R&D, us-east-1)        │
+│  HTTP: pipelineleakagent_pipeline_leak_agent-xYeQ4WBuf7      │
+│        (Streamlit UI calls this)                             │
+│  MCP:  pipelineleakagent_pipeline_leak_mcp-* (IAM auth)      │
+│        tools: investigate_pipeline_event, list_alarm_events  │
 │  How: docs/deploy-agentcore.md (CodeZip, cost-minimized)     │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -131,6 +133,7 @@ generate_incident_report(event_data: dict) -> dict
 - Cost-minimized on purpose: CodeZip build, PUBLIC network, OTel off, 5 min idle / 30 min max session, no Memory/Gateway/Evals, CSVs bundled in the zip. Don't add services without checking cost.
 - Public demo URL: Streamlit on one `t4g.micro` EC2 box (~$10/mo, stop it between demos). Scripts in `agentcore-deploy/ui-ec2/`, steps in `docs/deploy-agentcore.md`. Push to `main` then `sudo update-ui` on the box via SSM to update it.
 - Model is set by the runtime env var `MODEL_ID` (Sonnet 4.5). Haiku 4.5 is ~3x cheaper but untested against the 20 events.
+- **MCP server (2026-10-21):** second runtime `pipeline_leak_mcp` (protocol MCP, IAM auth) exposes `investigate_pipeline_event` + `list_alarm_events`; entrypoint `app/pipeline_leak_agent/mcp_server.py`, system prompt shared via `prompt.py`. Smoke: `src/tests/smoke_mcp_runtime.py`. Amazon Quick is NOT connected (cost); runbook to do so in `docs/quick-mcp-integration.md`.
 - Deployed agent scorecard (2026-10-19, after prompt fix): 20/20 classification, ~20 s per FP, ~30 s per leak. Re-check with `AWS_PROFILE=minfy-rnd .venv/bin/python src/tests/eval_agentcore_events.py` after any prompt/tool change.
 - Redeploy: `export AWS_PROFILE=minfy-rnd; cd agentcore-deploy/pipelineleakagent; cp ../../data/*.csv app/pipeline_leak_agent/data/; agentcore deploy -y`
 - UI against the deployed agent: `AWS_PROFILE=minfy-rnd AGENT_MODE=agentcore streamlit run src/app/streamlit_app.py --server.port 3000` (ARN auto-read from `agentcore/.cli/deployed-state.json`, or set `AGENTCORE_RUNTIME_ARN`).

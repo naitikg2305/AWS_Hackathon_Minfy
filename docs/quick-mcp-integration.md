@@ -1,7 +1,9 @@
 # How Amazon Quick would connect to the leak-detection agent over MCP
 
-Written 2026-10-21 (Naitik). Design write-up only, nothing here is built. Assumes we expose the agent as an
-MCP server; the question this answers is "then how does Amazon Quick talk to it?"
+Written 2026-10-21 (Naitik). **Status: the MCP server IS built and deployed** (runtime `pipeline_leak_mcp`,
+IAM auth, see `docs/deploy-agentcore.md` → "MCP server"). **Amazon Quick is NOT connected and not enabled**, by
+decision (cost). This doc is the runbook for the day someone wants to connect Quick: everything in Section 2 is
+done; Section 3 or 4 is what remains.
 
 ## 1. The two sides
 
@@ -26,7 +28,7 @@ MCP server; the question this answers is "then how does Amazon Quick talk to it?
 The one hard rule: **Quick will not sign requests with AWS SigV4.** Our current runtime uses the `AWS_IAM`
 authorizer, so Quick cannot call it. Whatever we expose must be OAuth-protected (or open, which we won't do).
 
-## 2. What we expose: one tool, not six
+## 2. What we expose: one tool, not six (DONE — `agentcore-deploy/pipelineleakagent/app/pipeline_leak_agent/mcp_server.py`)
 
 Expose the *agent* as a single MCP tool rather than the six raw tools:
 
@@ -67,10 +69,11 @@ def investigate_pipeline_event(station_id: str, start_time: str, end_time: str, 
 mcp.run(transport="streamable-http")
 ```
 
-In `agentcore.json` this is a second runtime: `"protocol": "MCP"`, same `codeLocation` pattern, same data
-files bundled. The existing HTTP runtime for the Streamlit UI stays as is.
+In `agentcore.json` this is the second runtime `pipeline_leak_mcp`: `"protocol": "MCP"`, same `codeLocation`
+and bundled data as the HTTP runtime, same cost knobs (CodeZip, PUBLIC, OTel off, 5/30 min lifecycle). The
+system prompt moved to `prompt.py` so both entrypoints share it. Smoke test: `src/tests/smoke_mcp_runtime.py`.
 
-## 3. Path A (cheapest): Runtime with a JWT authorizer, Quick calls it directly
+## 3. Path A (cheapest): Runtime with a JWT authorizer, Quick calls it directly — TO DO when Quick is wanted
 
 ```
 Quick ──(Bearer JWT from Cognito, client-credentials)──▶ AgentCore Runtime [protocol MCP, authorizer CUSTOM_JWT]
@@ -96,7 +99,7 @@ Bedrock tokens are the same as a UI click. No new always-on cost. This path is t
 put OAuth in front of a runtime, but **I have not tested Quick against a Runtime directly**; AWS's own
 walkthrough goes through Gateway (Path B). Try A first, fall back to B.
 
-## 4. Path B (AWS-documented): AgentCore Gateway in front
+## 4. Path B (AWS-documented): AgentCore Gateway in front — alternative, TO DO
 
 ```
 Quick ──(JWT, inbound Cognito pool)──▶ AgentCore Gateway ──(OAuth client via AgentCore Identity, outbound pool)──▶ Runtime (MCP)

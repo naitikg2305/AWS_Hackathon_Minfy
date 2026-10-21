@@ -10,23 +10,47 @@
   "runtimes": [
     {
       "name": "pipeline_leak_agent",
+      "description": "UC3 Pipeline Leak Detection agent (Strands + Bedrock Claude), cost-minimized CodeZip deploy",
       "build": "CodeZip",
       "entrypoint": "main.py",
       "codeLocation": "app/pipeline_leak_agent/",
       "runtimeVersion": "PYTHON_3_12",
-      "networkMode": "PUBLIC",
-      "protocol": "HTTP",
-      "authorizerType": "AWS_IAM",
-      "description": "UC3 Pipeline Leak Detection agent (Strands + Bedrock Claude), cost-minimized CodeZip deploy",
       "envVars": [
         {
           "name": "MODEL_ID",
           "value": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
         }
       ],
+      "networkMode": "PUBLIC",
       "instrumentation": {
         "enableOtel": false
       },
+      "protocol": "HTTP",
+      "authorizerType": "AWS_IAM",
+      "lifecycleConfiguration": {
+        "idleRuntimeSessionTimeout": 300,
+        "maxLifetime": 1800
+      }
+    },
+    {
+      "name": "pipeline_leak_mcp",
+      "build": "CodeZip",
+      "entrypoint": "mcp_server.py",
+      "codeLocation": "app/pipeline_leak_agent/",
+      "runtimeVersion": "PYTHON_3_12",
+      "networkMode": "PUBLIC",
+      "instrumentation": {
+        "enableOtel": false
+      },
+      "protocol": "MCP",
+      "authorizerType": "AWS_IAM",
+      "description": "MCP server exposing the validated leak-detection agent as tools (investigate_pipeline_event, list_alarm_events). IAM auth; flip to CUSTOM_JWT for Amazon Quick.",
+      "envVars": [
+        {
+          "name": "MODEL_ID",
+          "value": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        }
+      ],
       "lifecycleConfiguration": {
         "idleRuntimeSessionTimeout": 300,
         "maxLifetime": 1800

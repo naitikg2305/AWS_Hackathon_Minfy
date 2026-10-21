@@ -4,6 +4,21 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-10-21 — Naitik: Agent is now also an MCP server (deployed, IAM auth); Amazon Quick NOT connected
+
+### What changed
+- New runtime `pipeline_leak_mcp` (`pipelineleakagent_pipeline_leak_mcp-8R09966rG3`, protocol MCP, IAM auth) from `agentcore-deploy/.../mcp_server.py`. Tools: `investigate_pipeline_event(station_id, start_time, end_time, event_id="")` (runs the validated agent, returns the verdict text) and `list_alarm_events(kind)`.
+- System prompt moved to `prompt.py`, shared by `main.py` (HTTP runtime for the UI) and `mcp_server.py`. One place to edit; re-run `src/tests/eval_agentcore_events.py` after changes.
+- `pyproject.toml`: `mcp>=1.10,<2` (mcp 2.x renamed FastMCP → MCPServer; AgentCore docs use the 1.x API).
+- Smoke: `src/tests/smoke_mcp_runtime.py` (JSON-RPC via boto3 `invoke_agent_runtime`): initialize OK, tools/list OK, `list_alarm_events` 7.5 s cold, `investigate_pipeline_event(FP-001)` 23 s → FALSE POSITIVE.
+- Same cost profile as the HTTP runtime: CodeZip, PUBLIC, OTel off, 5/30 min lifecycle; bills only while a call runs.
+
+### Amazon Quick
+- Decision: not enabling Quick (Professional/Enterprise = $250/account/month flat + $20–40/user; trial auto-converts). The MCP server is ready for it; what remains is a Cognito pool + flipping this runtime's `authorizerType` to `CUSTOM_JWT` + registering the endpoint in Quick. Runbook: `docs/quick-mcp-integration.md`.
+- Repo hygiene: `agentcore-deploy/.../mcp_client/` is unused CLI boilerplate and `presentation.md:362` claims an "MCP client integration" — now we really have an MCP *server*; update the slide wording.
+
+---
+
 ## 2026-10-19 — Naitik: Agent was calling all 5 leaks FALSE POSITIVE — fixed, 20/20 on the deployed agent
 
 ### What happened

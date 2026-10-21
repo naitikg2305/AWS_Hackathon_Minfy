@@ -2,6 +2,10 @@
 
 Tools: `query_scada`, `check_operational_context`, `locate_leak`
 
+## 2026-10-21 — MCP server runtime
+
+- `mcp_server.py` + shared `prompt.py`; second AgentCore runtime (protocol MCP, IAM auth) deployed and smoke-tested; Quick runbook written, Quick not enabled (cost)
+
 ## 2026-10-19 — Public UI + agent correctness fix
 
 - Hosted Streamlit on EC2 t4g.micro (public URL), streaming + per-event result cache

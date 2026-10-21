@@ -15,6 +15,7 @@ dependencies = [
     "strands-agents >= 1.15.0",
     "pandas",
     "numpy",
+    "mcp>=1.10,<2",
 ]
 
 [tool.hatch.build.targets.wheel]
