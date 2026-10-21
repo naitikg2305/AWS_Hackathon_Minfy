@@ -10,14 +10,13 @@ All team members: append your updates here after every push so everyone sees the
 - New public URL: **https://pi-e4a940f7de9544eab171713c4ca21dfd.ecs.us-east-1.on.aws** (Amazon-issued cert, valid to 2027-05). Shared access code in front (ask Naitik); the `APP_PASSWORD` gate in `streamlit_app.py`.
 - `agentcore-deploy/ui-ecs-express/`: `Dockerfile` (python:3.12-slim, Streamlit on 8080, non-root, no AWS keys) + `deploy-ui-ecs-express.sh` (podman build → ECR `pipeline-leak-ui` → `aws ecs create/update-express-gateway-service`). ECS Express provisions Fargate + ALB + TLS + URL itself.
 - IAM: task role `pipeline-leak-ui-task-role` (InvokeAgentRuntime only), infra role `pipeline-leak-ui-express-infra-role` (AWS managed Express policy). The other team's `ecsInfrastructureRoleForExpressServices` can't be assumed by Express (its trust has a SourceArn condition) — don't reuse it.
-- EC2 box `i-0fe15135262c099ed` (http://54.144.59.20/) stopped, not terminated; `agentcore-deploy/ui-ec2/` kept as fallback.
+- EC2 box `i-0fe15135262c099ed` (http://54.144.59.20/) terminated, Elastic IP released, security group deleted; `agentcore-deploy/ui-ec2/` kept only as the fallback recipe. Only the ECS Express URL is live now.
 
 ### Cost
 ~$35/mo running (Fargate ~$18 + ALB ~$16) vs ~$10 for the EC2 box. HTTPS is the reason. Scale to zero between demo days: see the script's printed command; the ALB bills until the service is deleted.
 
 ### Next
 - Ask IT for a Minfy subdomain → CNAME to the ALB + ACM cert; then Streamlit `st.login` (OIDC) against Entra for real sign-in.
-- Terminate the EC2 box + release the Elastic IP once everyone is happy with the ECS URL.
 
 ---
 

@@ -70,7 +70,7 @@ agentcore remove agent --name pipeline_leak_agent && agentcore deploy -y   # del
 # optional: aws cloudformation delete-stack --stack-name CDKToolkit (after emptying its S3 bucket)
 ```
 
-## Public demo URL, v1 (Streamlit on one small EC2 box) — SUPERSEDED by ECS Express below; instance stopped 2026-10-21
+## Public demo URL, v1 (Streamlit on one small EC2 box) — SUPERSEDED by ECS Express below; instance terminated and EIP released 2026-10-21
 
 Added 2026-10-19. Cheapest AWS-native way to get a shareable link that can call the runtime with an IAM role instead of stored keys. No login for visitors.
 
