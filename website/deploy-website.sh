@@ -110,12 +110,17 @@ if [ -z "$ID" ]; then
 else
   ETAG=$(aws cloudfront get-distribution-config --id "$ID" --query ETag --output text)
   CUR=$(aws cloudfront get-distribution-config --id "$ID" --query DistributionConfig --output json)
+  # UpdateDistribution needs the FULL current config (Logging, Restrictions, WebACLId, ...). Start from it and
+  # patch only what we own: origin/OAC, cache behavior, error pages, and (if given) the alias + certificate.
   NEW=$(python3 -c "
 import json,sys
 cur=json.loads(sys.argv[1]); new=json.loads(sys.argv[2])
-new['CallerReference']=cur['CallerReference']
-if not new['Aliases']['Quantity']: new['Aliases']=cur['Aliases']; new['ViewerCertificate']=cur['ViewerCertificate']
-print(json.dumps(new))" "$CUR" "$CFG")
+# origins/behaviors were set at create time and carry service-filled sub-fields; leave them untouched on update
+for k in ('Comment','Enabled','DefaultRootObject','PriceClass','HttpVersion','IsIPV6Enabled'):
+    cur[k]=new[k]
+if new['Aliases']['Quantity']:
+    cur['Aliases']=new['Aliases']; cur['ViewerCertificate']=new['ViewerCertificate']
+print(json.dumps(cur))" "$CUR" "$CFG")
   aws cloudfront update-distribution --id "$ID" --if-match "$ETAG" --distribution-config "$NEW" >/dev/null
   echo "updated distribution $ID"
 fi
