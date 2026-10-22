@@ -2,6 +2,10 @@
 
 Tools: `query_scada`, `check_operational_context`, `locate_leak`
 
+## 2026-10-22 — Minfy hostnames
+
+- ACM cert + `attach-minfy-hostnames.sh`; pipeline.minfytech.com and pipeline-app.minfytech.com live over HTTPS
+
 ## 2026-10-21 — Demo website on S3 + CloudFront
 
 - `website/` added from the handoff zip; deploy script; live at https://d1mmotfbiqqghm.cloudfront.net/; Minfy hostname pending IT

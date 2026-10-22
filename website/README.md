@@ -29,7 +29,14 @@ AWS_PROFILE=minfy-rnd ./deploy-website.sh --status   # URL + distribution status
 
 Cost: no fixed charge. ~18 MB of storage and CloudFront egress inside the free tier for any realistic demo traffic.
 
-## Custom Minfy hostname (pending IT)
+## Custom Minfy hostnames (DONE 2026-10-22)
+
+Live: **https://pipeline.minfytech.com/** (this site) and **https://pipeline-app.minfytech.com/** (Streamlit app).
+One ACM certificate in us-east-1 covers both; IT added the routing CNAMEs and the two ACM validation CNAMEs.
+`attach-minfy-hostnames.sh` attaches the cert + alias to CloudFront and the cert + a host-header rule to the shared
+ECS Express ALB. **Re-run it after every UI deploy** (Express rolling deploys can swap target groups).
+
+Original steps, for reference:
 
 1. `aws acm request-certificate --region us-east-1 --domain-name <host> --validation-method DNS --profile minfy-rnd`
 2. IT adds the ACM validation CNAME, then `CNAME <host> → <distribution>.cloudfront.net`.

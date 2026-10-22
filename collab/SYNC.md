@@ -4,6 +4,21 @@ All team members: append your updates here after every push so everyone sees the
 
 ---
 
+## 2026-10-22 — Naitik: Minfy hostnames live — pipeline.minfytech.com (website) + pipeline-app.minfytech.com (app)
+
+### What changed
+- Prashanth added CNAMEs `pipeline → d1mmotfbiqqghm.cloudfront.net` and `pipeline-app → pi-e4a9….ecs.us-east-1.on.aws` (from Sujoy), then the two ACM validation CNAMEs. One ACM cert (us-east-1) covers both names.
+- `website/attach-minfy-hostnames.sh` added the alias + cert to CloudFront and the cert (SNI) + a host-header rule (priority 44991 → our target group) to the shared Express ALB `ecs-express-gateway-alb-bfeb2b96`. ECS Express has no custom-domain setting; the ALB routes by Host, hence the 403/404 before.
+- Verified: both URLs HTTPS 200, valid certs, http→https redirect on the website, app health `ok`, headline present.
+
+### For Sujoy
+Final links to send: **https://pipeline.minfytech.com/** (demo page + video) and **https://pipeline-app.minfytech.com/** (live app, access code from Naitik).
+
+### Gotcha
+After every UI redeploy (`deploy-ui-ecs-express.sh`), run `website/attach-minfy-hostnames.sh` again — Express rolling deployments can swap target groups and the manual host rule must follow.
+
+---
+
 ## 2026-10-21 — Naitik: Demo website (handoff zip) hosted on S3 + CloudFront
 
 ### What changed
